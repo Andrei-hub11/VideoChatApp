@@ -1,0 +1,30 @@
+﻿namespace VideoChatApp.Common.Utils.ResultError;
+
+public sealed record Error : IError
+{
+    public string Description { get; init; }
+    public string Code { get; init; }
+    public ErrorType ErrorType { get; init; }
+
+    private Error(string description, string code, ErrorType errorType)
+    {
+        Description = description;
+        Code = code;
+        ErrorType = errorType;
+    }
+
+    public static Error Failure(string description, string code)
+        => new Error(description, code, ErrorType.Failure);
+
+    public static Error Unexpected(string code, string description)
+       => new Error(description, code, ErrorType.Unexpected);
+
+    public static ValidationError Validation(string description, string code, string field)
+      => ValidationError.Create(description, code, field);
+
+    public static Error Conflict(string code, string description)
+      => new Error(description, code, ErrorType.Conflict);
+
+    public static Error NotFound(string code, string description)
+      => new Error(description, code, ErrorType.NotFound);
+}
