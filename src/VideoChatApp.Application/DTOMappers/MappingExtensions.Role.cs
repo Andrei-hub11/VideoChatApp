@@ -7,15 +7,15 @@ public static class MappingExtensionsRole
 {
     public static RoleResponseDTO ToDTO(this RoleMappingDTO role)
     {
-        return new RoleResponseDTO(role.Id, role.Name);
+        return new RoleResponseDTO(role.Name);
     }
 
-    public static HashSet<RoleResponseDTO> ToDTO(this HashSet<RoleMappingDTO> roles)
+    public static IReadOnlySet<RoleResponseDTO> ToDTO(this IReadOnlySet<RoleMappingDTO> roles)
     {
         return roles.Select(role => role.ToDTO()).ToHashSet();
     }
 
-    public static HashSet<string> ToHashSetString(this HashSet<RoleResponseDTO> roles)
+    public static IReadOnlySet<string> ToHashSetString(this IReadOnlySet<RoleResponseDTO> roles)
     {
         return roles.Select(role => role.Name).ToHashSet();
     }

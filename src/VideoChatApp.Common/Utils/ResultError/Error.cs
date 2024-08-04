@@ -16,15 +16,18 @@ public sealed record Error : IError
     public static Error Failure(string description, string code)
         => new Error(description, code, ErrorType.Failure);
 
-    public static Error Unexpected(string code, string description)
+    public static Error Unexpected(string description, string code)
        => new Error(description, code, ErrorType.Unexpected);
 
     public static ValidationError Validation(string description, string code, string field)
       => ValidationError.Create(description, code, field);
 
-    public static Error Conflict(string code, string description)
+    public static Error Conflict(string description, string code)
       => new Error(description, code, ErrorType.Conflict);
 
-    public static Error NotFound(string code, string description)
+    public static Error NotFound(string description, string code)
       => new Error(description, code, ErrorType.NotFound);
+
+    public static Error Unauthorized(string description, string code)
+     => new Error(description, code, ErrorType.Unauthorized);
 }

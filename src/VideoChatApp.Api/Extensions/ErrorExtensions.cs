@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
 using VideoChatApp.Common.Utils.ResultError;
+using VideoChatApp.Common.Extensions;
 using VideoChatApp.Contracts.Models;
 
-namespace VideoChatApp.Api.Errors;
+namespace VideoChatApp.Api.Extensions;
 
 public static class ErrorExtensions
 {
@@ -11,7 +12,7 @@ public static class ErrorExtensions
     /// Converts a single <see cref="IError"/> instance to a <see cref="ProblemDetails"/> result.
     /// Maps the error type to an appropriate HTTP status code and includes the error description in the response.
     /// </summary>
-    /// <param name="error">The error to convert.</param>
+    /// <param name="errors">The error to convert.</param>
     /// <returns>An <see cref="IActionResult"/> representing the problem details result.</returns>
     public static IActionResult ToProblemDetailsResult(this IReadOnlyList<IError> errors)
     {
@@ -43,7 +44,7 @@ public static class ErrorExtensions
         var statusCode = error.ErrorType switch
         {
             ErrorType.Conflict => StatusCodes.Status409Conflict,
-            ErrorType.Validation => StatusCodes.Status400BadRequest,
+            ErrorType.Validation => StatusCodes.Status422UnprocessableEntity,
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.Unauthorized => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status500InternalServerError,
@@ -73,7 +74,7 @@ public static class ErrorExtensions
             .OfType<ValidationError>()
             .GroupBy(error => error.Field)
             .ToDictionary(
-                group => group.Key,
+                group => group.Key.CapitalizeFirstLetter(),
                 group => group.Select(error =>
                 new ValidationErrorDetail(error.Code, error.Description)).ToArray());
 
@@ -93,7 +94,7 @@ public static class ErrorExtensions
         Detail: "See the errors property for details.",
         Instance: Guid.NewGuid().ToString(),
         Errors: validationErrors
-    );
+        );
 
         return new BadRequestObjectResult(validationProblemDetails);
     }

@@ -42,7 +42,7 @@ public partial class Guard: IGuard, IGuardInternal, IDisposable
     {
         if (!_throwCalled)
         {
-            throw new InvalidOperationException("Throw() must be called to complete the chain.");
+            throw new InvalidOperationException("'ThrowIfInvalid' or 'DoNotThrowOnError' must be called to complete the chain.");
         }
     }
 }

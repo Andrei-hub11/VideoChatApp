@@ -20,4 +20,15 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\VideoChatApp.Application\VideoChatApp.Application.csproj" />
+    <ProjectReference Include="..\..\src\VideoChatApp.Common\VideoChatApp.Common.csproj" />
+    <ProjectReference Include="..\..\src\VideoChatApp.Contracts\VideoChatApp.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\VideoChatApp.Domain\VideoChatApp.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

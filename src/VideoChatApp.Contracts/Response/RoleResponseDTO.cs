@@ -1,3 +1,3 @@
 ﻿namespace VideoChatApp.Contracts.Response;
 
-public sealed record RoleResponseDTO(string Id, string Name);
+public sealed record RoleResponseDTO(string Name);

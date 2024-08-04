@@ -1,8 +1,9 @@
-﻿using System.Net.Http.Headers;
-
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
+﻿using System.Net;
 using System.Text;
+using System.Net.Http.Headers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Configuration;
 
 using VideoChatApp.Domain.Exceptions;
 using VideoChatApp.Application.Contracts.Services;
@@ -12,6 +13,9 @@ using VideoChatApp.Contracts.Response;
 using VideoChatApp.Contracts.Models;
 using VideoChatApp.Application.DTOMappers;
 using VideoChatApp.Application.Extensions;
+using VideoChatApp.Application.Common.Result;
+using VideoChatApp.Application.Contracts.UtillityFactories;
+using VideoChatApp.Common.Utils.Errors;
 
 namespace VideoChatApp.Application.Services.Keycloak;
 
@@ -19,11 +23,16 @@ public class KeycloakService : IKeycloakService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly IErrorMapper _errorMapper;
+    private readonly TimeSpan _tokenExpiryBuffer = TimeSpan.FromMinutes(1);
+    private KeycloakToken _cachedToken = default!;
+    private DateTimeOffset _tokenExpiration = DateTimeOffset.MinValue;
 
-    public KeycloakService(HttpClient httpClient, IConfiguration configuration)
+    public KeycloakService(HttpClient httpClient, IConfiguration configuration, IErrorMapper errorMapper)
     {
         _httpClient = httpClient;
         _configuration = configuration;
+        _errorMapper = errorMapper;
     }
 
     public async Task<IReadOnlyList<UserResponseDTO>> GetAllUsersAsync()
@@ -33,11 +42,13 @@ public class KeycloakService : IKeycloakService
         return users.ToDTO();
     }
 
-    public async Task<AuthResponseDTO> RegisterUserAync(UserRegisterRequestDTO request)
+    public async Task<Result<AuthResponseDTO>> RegisterUserAync(UserRegisterRequestDTO request, string profileImageUrl, CancellationToken cancellationToken)
     {
-        UserMapping newUser = default!;
+        Result<UserMapping> newUser = default!;
+        bool isRollback = true;
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var tokenResponse = await GetAdminTokenAsync();
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
@@ -58,7 +69,7 @@ public class KeycloakService : IKeycloakService
             },
                 attributes = new Dictionary<string, string>
                 {
-                    ["profile-image-url"] = request.ProfileImageUrl
+                    ["profile-image-url"] = profileImageUrl
                 }
             };
 
@@ -66,53 +77,111 @@ public class KeycloakService : IKeycloakService
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync($"http://localhost:8080/admin/realms/chat-app/users", content);
+            
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new BadRequestException(error);
+                var errorContent = await response.Content.ReadAsStringAsync();
+
+                if (response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.Conflict)
+                {
+                    var errorObj = JObject.Parse(errorContent);
+                    var errorMessage = errorObj["errorMessage"]?.ToString();
+                    var error = _errorMapper.MapHttpErrorToAppError(response.StatusCode, errorMessage ?? errorContent);
+
+                    return Result.Fail(error);
+                }
+
+                throw new BadRequestException(errorContent);
             }
 
             newUser = await GetUserByNameAsync(request.UserName);
 
-            await AddUserToGroupByNameAsync(newUser.Id, "Users");
+            if (newUser.IsFailure)
+            {
+                return Result.Fail(newUser.Errors);
+            }
+
+            var result = await AddUserToGroupByNameAsync(newUser.Value.Id, "Users");
+
+            if(result.IsFailure)
+            {
+                return Result.Fail(result.Errors);
+            }
+
             var groupId = await GetGroupIdByNameAsync("Users");
-            await AddGroupRoleToUserAsync(newUser.Id, groupId, "User");
+
+            if(groupId.IsFailure)
+            {
+                return Result.Fail(groupId.Errors);
+            }
+
+            await AddGroupRoleToUserAsync(newUser.Value.Id, groupId.Value, "User");
 
             var userToken = await GetUserTokenAsync(request.UserName, request.Password);
-            var roles = await GetRolesAsync(newUser.Id);
 
-            return new AuthResponseDTO(newUser.ToDTO(), userToken.AccessToken, userToken.RefreshToken, roles.ToDTO());
+            var roles = await GetRolesAsync(newUser.Value.Id);
+
+            if (roles.IsFailure)
+            {
+                return Result.Fail(roles.Errors);
+            }
+
+            isRollback = false;
+
+            return new AuthResponseDTO(newUser.Value.ToDTO(), userToken.AccessToken, userToken.RefreshToken, 
+                roles.Value.ToDTO());
         }
         catch (Exception)
         {
+
+            throw;
+        }
+        finally
+        {
             // If the user was successfully created in Keycloak, try to delete it in case of failure
-            if (newUser != null && !string.IsNullOrEmpty(newUser.Id))
+            if (isRollback && newUser != null && !newUser.IsFailure && !string.IsNullOrEmpty(newUser.Value.Id))
             {
                 try
                 {
-                    await DeleteUserByIdAsync(newUser.Id);
+                    await DeleteUserByIdAsync(newUser.Value.Id);
                 }
-                catch(Exception)
+                catch (Exception deleteEx)
                 {
-                    throw;
+                    throw new BadRequestException("Failed to delete user after a registration failure.", deleteEx);
                 }
             }
-
-            throw; 
         }
     }
 
 
-    public async Task<AuthResponseDTO> LoginUserAync(UserLoginRequestDTO request)
+    public async Task<Result<AuthResponseDTO>> LoginUserAync(UserLoginRequestDTO request, CancellationToken cancellationToken)
     {
-        var userToken = await GetUserTokenAsync(request.Email, request.Password);
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
 
-        var user = await GetUserByEmailAsync(request.Email);
+            var userToken = await GetUserTokenAsync(request.Email, request.Password);
 
-        var roles = await GetRolesAsync(user.Id);
+            var user = await GetUserByEmailAsync(request.Email);
 
-        return new AuthResponseDTO(user.ToDTO(), AccessToken: userToken.AccessToken,
-            RefreshToken: userToken.RefreshToken, Roles: roles.ToDTO());
+            if (user.IsFailure)
+            {
+                return Result.Fail(user.Errors);
+            }
+
+            var roles = await GetRolesAsync(user.Value.Id);
+
+            if (roles.IsFailure)
+            {
+                return Result.Fail(roles.Errors);
+            }
+
+            return new AuthResponseDTO(user.Value.ToDTO(), AccessToken: userToken.AccessToken,
+                RefreshToken: userToken.RefreshToken, Roles: roles.Value.ToDTO());
+        } catch(Exception)
+        {
+            throw;
+        }
     }
 
     private async Task<IEnumerable<UserMapping>> GetUsersAsync()
@@ -143,9 +212,9 @@ public class KeycloakService : IKeycloakService
         return users;
     }
 
-    private async Task<UserMapping> GetUserByNameAsync(string username)
+    private async Task<Result<UserMapping>> GetUserByNameAsync(string userName)
     {
-        var apiUrl = $"http://localhost:8080/admin/realms/chat-app/users/?username={username}";
+        var apiUrl = $"http://localhost:8080/admin/realms/chat-app/users/?username={userName}";
 
         var tokenResponse = await GetAdminTokenAsync();
 
@@ -166,13 +235,13 @@ public class KeycloakService : IKeycloakService
 
         if (users == null || users.Count == 0)
         {
-            throw new NotFoundException("User not found");
+            return Result.Fail(UserErrorFactory.UserNotFoundByName(userName));
         }
 
         return users.First();
     }
 
-    private async Task<UserMapping> GetUserByEmailAsync(string email)
+    public async Task<Result<UserMapping>> GetUserByEmailAsync(string email)
     {
         var apiUrl = $"http://localhost:8080/admin/realms/chat-app/users/?email={email}";
 
@@ -195,7 +264,7 @@ public class KeycloakService : IKeycloakService
 
         if (users == null || users.Count == 0)
         {
-            throw new NotFoundException("User not found");
+            return Result.Fail(UserErrorFactory.UserNotFoundByEmail(email));
         }
 
         return users.First();
@@ -203,6 +272,11 @@ public class KeycloakService : IKeycloakService
 
     private async Task<KeycloakToken> GetAdminTokenAsync()
     {
+        if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiration - _tokenExpiryBuffer)
+        {
+            return _cachedToken;
+        }
+
         var formData = new Dictionary<string, string>
         {
             { "client_id", _configuration.GetRequiredValue("UserKeycloakAdmin:client_id")},
@@ -228,6 +302,9 @@ public class KeycloakService : IKeycloakService
         var tokenResponse = JsonConvert.DeserializeObject<KeycloakToken>(jsonResponse);
 
         ThrowHelper.ThrowIfNull(tokenResponse);
+
+        _cachedToken = tokenResponse;
+        _tokenExpiration = DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
 
         return tokenResponse;
     }
@@ -262,7 +339,7 @@ public class KeycloakService : IKeycloakService
         return tokenResponse;
     }
 
-    private async Task<string> GetGroupIdByNameAsync(string groupName)
+    private async Task<Result<string>> GetGroupIdByNameAsync(string groupName)
     {
         var tokenResponse = await GetAdminTokenAsync();
 
@@ -283,13 +360,12 @@ public class KeycloakService : IKeycloakService
 
         var group = groups?.FirstOrDefault(g => g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase));
 
-        return group?.Id ?? throw new NotFoundException("Group not found");
-    }
+        if (group?.Id == null)
+        {
+            return Result.Fail(ErrorFactory.ResourceNotFound("User group", groupName));
+        }
 
-    private async Task AddUserToGroupByNameAsync(string userId, string groupName)
-    {
-        var groupId = await GetGroupIdByNameAsync(groupName);
-        await AddUserToGroupAsync(userId, groupId);
+        return group.Id;
     }
 
     private async Task<List<UserResponseDTO>> GetUsersInGroupAsync(string groupId)
@@ -371,7 +447,7 @@ public class KeycloakService : IKeycloakService
         return mappings;
     }
 
-    private async Task<HashSet<RoleMappingDTO>> GetRolesAsync(string userId)
+    private async Task<Result<HashSet<RoleMappingDTO>>> GetRolesAsync(string userId)
     {
         var tokenResponse = await GetAdminTokenAsync();
 
@@ -384,6 +460,18 @@ public class KeycloakService : IKeycloakService
         var rolesUrl = $"http://localhost:8080/admin/realms/chat-app/users/{userId}/role-mappings/clients/{client.Id}";
 
         var response = await _httpClient.GetAsync(rolesUrl);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            var errorObj = JObject.Parse(errorContent);
+            var errorMessage = errorObj["error"]?.ToString();
+
+            if (errorMessage == "User not found")
+            {
+                return Result.Fail(UserErrorFactory.UserNotFoundById(userId));
+            }
+        }
 
         if (!response.IsSuccessStatusCode)
         {
@@ -398,6 +486,20 @@ public class KeycloakService : IKeycloakService
         ThrowHelper.ThrowIfNull(roles);
 
         return roles;
+    }
+
+    private async Task<Result<bool>> AddUserToGroupByNameAsync(string userId, string groupName)
+    {
+        var groupId = await GetGroupIdByNameAsync(groupName);
+
+        if (groupId.IsFailure)
+        {
+            return Result.Fail(groupId.Errors);
+        }
+
+        await AddUserToGroupAsync(userId, groupId.Value);
+
+        return true;
     }
 
     private async Task AddUserToGroupAsync(string userId, string groupId)

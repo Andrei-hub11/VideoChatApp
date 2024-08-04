@@ -13,10 +13,9 @@ public partial class Guard
     public IGuardInternal IsNullOrWhiteSpace(string value,
     [CallerArgumentExpression(nameof(value))] string valueExpression = "")
     {
-
         if (string.IsNullOrWhiteSpace(value))
         {
-            ErrorList.Add(Error.Validation($"{valueExpression} não pode ser null nem vazio", 
+            ErrorList.Add(Error.Validation($"{valueExpression} cannot be null or empty",
                 "ERR_IS_NULL_OR_EMPTY", valueExpression));
         }
 
@@ -24,13 +23,12 @@ public partial class Guard
     }
 
     public IGuardInternal MaxLength(string value, int max,
-      [CallerArgumentExpression(nameof(value))] string valueExpression = "")
+        [CallerArgumentExpression(nameof(value))] string valueExpression = "")
     {
-
         if (value.Length > max)
         {
-            ErrorList.Add(Error.Validation($"{valueExpression} deve possuir no máximo {max} caracteres",
-                "ERR_TOO_LOOG", valueExpression));
+            ErrorList.Add(Error.Validation($"{valueExpression} must have a maximum of {max} characters",
+                "ERR_TOO_LONG", valueExpression));
         }
 
         return this;
@@ -39,10 +37,9 @@ public partial class Guard
     public IGuardInternal MinLength(string value, int min,
         [CallerArgumentExpression(nameof(value))] string valueExpression = "")
     {
-
         if (value.Length < min)
         {
-            ErrorList.Add(Error.Validation($"{valueExpression} deve possuir no mínimo {min} caracteres",
+            ErrorList.Add(Error.Validation($"{valueExpression} must have at least {min} characters",
                 "ERR_TOO_SHORT", valueExpression));
         }
 
@@ -52,10 +49,9 @@ public partial class Guard
     public IGuardInternal InRange(string value, int min, int max,
         [CallerArgumentExpression(nameof(value))] string valueExpression = "")
     {
-
         if (value.Length < min || value.Length > max)
         {
-            ErrorList.Add(Error.Validation($"{valueExpression} deve possuir no mínimo {min} caracteres e no máximo {max}",
+            ErrorList.Add(Error.Validation($"{valueExpression} must have at least {min} characters and at most {max}",
                 "ERR_LENGTH_OUT_OF_RANGE", valueExpression));
         }
 
@@ -66,7 +62,7 @@ public partial class Guard
     {
         if (!NumericRegex.IsMatch(value))
         {
-            ErrorList.Add(Error.Validation($"{valueExpression} deve conter apena números",
+            ErrorList.Add(Error.Validation($"{valueExpression} must contain only numbers",
                 "ERR_NOT_NUMERIC", valueExpression));
         }
 
@@ -77,8 +73,21 @@ public partial class Guard
     {
         if (!AlphanumericRegex.IsMatch(value))
         {
-            ErrorList.Add(Error.Validation($"{valueExpression} deve conter apenas letras e números",
+            ErrorList.Add(Error.Validation($"{valueExpression} must contain only letters and numbers",
                 "ERR_NOT_ALPHANUMERIC", valueExpression));
+        }
+
+        return this;
+    }
+
+
+    public IGuardInternal MatchesPattern(
+        string value, string pattern, string errorMessage, string errorCode,
+        [CallerArgumentExpression(nameof(value))] string valueExpression = "")
+    {
+        if (!Regex.IsMatch(value, pattern))
+        {
+            ErrorList.Add(Error.Validation(errorMessage, errorCode, valueExpression));
         }
 
         return this;

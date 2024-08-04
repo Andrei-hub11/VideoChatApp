@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using Serilog.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging;
@@ -9,10 +10,11 @@ using VideoChatApp.Infrastructure.Logging;
 using VideoChatApp.Infrastructure.Data;
 using VideoChatApp.Infrastructure.Security;
 using VideoChatApp.Infrastructure.Extensions;
-using VideoChatApp.Application.Contracts.Repositories;
 using VideoChatApp.Infrastructure.Persistence;
-using Serilog.Filters;
+using VideoChatApp.Infrastructure.UtillityFactories;
 using VideoChatApp.Application.Contracts.Data;
+using VideoChatApp.Application.Contracts.Repositories;
+using VideoChatApp.Application.Contracts.UtillityFactories;
 
 namespace VideoChatApp.Infrastructure;
 
@@ -25,7 +27,8 @@ public static class ServiceCollectionExtensions
             .AddSerilog(configuration)
             .AddHttpClient()
             .AddKeycloakAuthentication(configuration)
-            .AddKeycloakPolicy();
+            .AddKeycloakPolicy()
+            .AddFactories();
 
         return services;
     }
@@ -39,7 +42,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddSerilog(this IServiceCollection services, 
+    private static IServiceCollection AddSerilog(this IServiceCollection services, 
         IConfiguration configuration)
     {
         Log.Logger = new LoggerConfiguration()
@@ -58,7 +61,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddKeycloakAuthentication(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddKeycloakAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<KeycloakSettings>(configuration.GetSection("Keycloak"));
 
@@ -75,12 +78,22 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static void AddKeycloakPolicy(this IServiceCollection services)
+    private static IServiceCollection AddKeycloakPolicy(this IServiceCollection services)
     {
         services.AddAuthorization(options =>
         {
             options.AddPolicy("Admin", policy =>
                 policy.RequireAssertion(context => context.User.HasRole("Admin")));
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddFactories(this IServiceCollection services)
+    {
+        services.AddSingleton<IErrorMapper, ErrorMapper>();
+        services.AddScoped<IAccountServiceErrorHandler, AccountServiceErrorHandler>();
+
+        return services;
     }
 }

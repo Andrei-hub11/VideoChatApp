@@ -1,13 +1,13 @@
 CREATE TRIGGER TriggerApplicationUserUpdate
-ON ApplicationUser
+ON ApplicationUsers
 AFTER UPDATE
 AS
 BEGIN
-    IF UPDATE(UserName) OR UPDATE(Email) OR UPDATE(PasswordHash) OR UPDATE(ProfileImage) OR UPDATE(ProfileImageUrl)
+    IF UPDATE(UserName) OR UPDATE(Email) OR UPDATE(PasswordHash) OR UPDATE(ProfileImage) OR UPDATE(ProfileImagePath)
     BEGIN
-        UPDATE ApplicationUser
+        UPDATE ApplicationUsers
         SET UpdatedAt = GETDATE()
-        FROM ApplicationUser
-        INNER JOIN inserted ON ApplicationUser.Id = inserted.Id;
+        FROM ApplicationUsers
+        INNER JOIN inserted ON ApplicationUsers.Id = inserted.Id;
     END
 END;

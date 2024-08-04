@@ -16,4 +16,8 @@
     <ProjectReference Include="..\VideoChatApp.Infrastructure\VideoChatApp.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\users\images\" />
+  </ItemGroup>
+
 </Project>

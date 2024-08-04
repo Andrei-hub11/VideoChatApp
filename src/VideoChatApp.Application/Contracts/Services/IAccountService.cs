@@ -6,6 +6,6 @@ namespace VideoChatApp.Application.Contracts.Services;
 
 public interface IAccountService
 {
-    Task<Result<AuthResponseDTO>> RegisterUserAsync(UserRegisterRequestDTO requestDTO);
-    Task<AuthResponseDTO> LoginUserAsync(UserLoginRequestDTO request);
+    Task<Result<AuthResponseDTO>> RegisterUserAsync(UserRegisterRequestDTO requestDTO, CancellationToken cancellationToken);
+    Task<Result<AuthResponseDTO>> LoginUserAsync(UserLoginRequestDTO request, CancellationToken cancellationToken);
 }

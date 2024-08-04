@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 
+using NerdCritica.Application.Services.ImageServiceConfiguration;
+
 using VideoChatApp.Api.Middleware;
+using VideoChatApp.Application.Contracts.Services;
 
 namespace VideoChatApp.Api.DependencyInjection;
 
@@ -14,6 +17,8 @@ public static class ServiceCollection
         services.AddSwaggerGen();
         services.AddProblemDetails();
         services.AddExceptionHandler<ExceptionHandler>();
+
+        services.AddSingleton<IImageServiceConfiguration>(new ImageServiceConfiguration(AppDomain.CurrentDomain.BaseDirectory));
 
         return services;
     }

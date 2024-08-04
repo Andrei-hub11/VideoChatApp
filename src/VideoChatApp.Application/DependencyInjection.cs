@@ -2,6 +2,7 @@
 
 using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Application.Services.Account;
+using VideoChatApp.Application.Services.Images;
 using VideoChatApp.Application.Services.Keycloak;
 
 namespace VideoChatApp.Application;
@@ -12,6 +13,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IKeycloakService, KeycloakService>();
+        services.AddScoped<IImagesService, ImageService>();
         return services;
     }
 }

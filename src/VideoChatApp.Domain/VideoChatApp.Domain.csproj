@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VideoChatApp.Common\VideoChatApp.Common.csproj" />
+    <ProjectReference Include="..\VideoChatApp.Contracts\VideoChatApp.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

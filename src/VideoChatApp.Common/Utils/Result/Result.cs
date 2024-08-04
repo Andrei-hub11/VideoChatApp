@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-using VideoChatApp.Common.Utils.FollowerErrors;
+using VideoChatApp.Common.Utils.Errors;
 using VideoChatApp.Common.Utils.ResultError;
 
 namespace VideoChatApp.Application.Common.Result;
@@ -72,8 +72,8 @@ public partial class Result<T> : Result
 
     public static implicit operator Result<T>(T value) => new Result<T>(value, false, Array.Empty<IError>());
 
-    public static implicit operator Result<T>(string description) =>
-     new Result<T>(default, true, new List<IError> { ErrorFactory.Failure(description) });
+    public static implicit operator Result<T>(Error error) =>
+     new Result<T>(default, true, new List<IError> { error });
 
 
     /// <summary>

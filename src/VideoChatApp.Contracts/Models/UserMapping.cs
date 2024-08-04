@@ -14,7 +14,7 @@ public class UserMapping
     public string ProfileImageUrl { get; set; } = string.Empty;
 
     [JsonExtensionData]
-    private IDictionary<string, JToken> _additionalData;
+    private IDictionary<string, JToken> _additionalData = default!;
 
     [OnDeserialized]
     internal void OnDeserialized(StreamingContext context)

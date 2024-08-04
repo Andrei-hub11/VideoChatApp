@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-using VideoChatApp.Api.Errors;
+using VideoChatApp.Api.Extensions;
+using VideoChatApp.Application.Common.Result;
 using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Contracts.Request;
 
 namespace VideoChatApp.Controllers;
 
-[Route("api/v1")]
+[Route("api/v1/account")]
 [ApiController]
 public class AccountController : ControllerBase
 {
@@ -37,27 +38,25 @@ public class AccountController : ControllerBase
     //}
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] UserRegisterRequestDTO request)
+    public async Task<IActionResult> Register([FromBody] UserRegisterRequestDTO request,
+        CancellationToken cancellationToken)
     {
-        var result = await _accountService.RegisterUserAsync(request);
+        var result = await _accountService.RegisterUserAsync(request, cancellationToken);
 
         return result.Match(
-            onSuccess: (user) => Ok(user), 
+            onSuccess: (user) => Ok(user),
             onFailure: (errors) => errors.ToProblemDetailsResult());
     }
 
-    //[HttpPost("login")]
-    //public async Task<IActionResult> Login([FromBody] UserLoginRequestDTO request)
-    //{
-    //    try
-    //    {
-    //        var user = await _accountService.LoginUserAync(request);
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] UserLoginRequestDTO request,
+        CancellationToken cancellationToken)
+    {
 
-    //        return Ok(user);
-    //    }
-    //    catch (Exception)
-    //    {
-    //        throw;
-    //    }
-    //}
+        var result = await _accountService.LoginUserAsync(request, cancellationToken);
+
+        return result.Match(
+            onSuccess: (user) => Ok(user),
+            onFailure: (errors) => errors.ToProblemDetailsResult());
+    }
 }
