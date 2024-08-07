@@ -5,7 +5,7 @@ namespace VideoChatApp.Domain.GuardClause;
 public partial class Guard: IGuard, IGuardInternal, IDisposable
 {
     private bool _throwCalled = false;
-    private List<IError> ErrorList { get; set; } = [];
+    private List<ValidationError> ErrorList { get; set; } = [];
 
     private Guard()
     {

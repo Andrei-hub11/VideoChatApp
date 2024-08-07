@@ -7,7 +7,7 @@ using VideoChatApp.Domain.GuardClause;
 
 namespace VideoChatApp.Domain.Entities;
 
-public class User
+public sealed class User
 {
     public string Id { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
@@ -54,7 +54,7 @@ public class User
         }
 
         return new User(applicationUser.Id, applicationUser.UserName, applicationUser.Email,
-            applicationUser.PasswordHash, Array.Empty<byte>(), applicationUser.ProfileImagePath,
+            applicationUser.PasswordHash, applicationUser.ProfileImage, applicationUser.ProfileImagePath,
             applicationUser.Roles);
     }
 
@@ -62,7 +62,7 @@ public class User
         IReadOnlySet<string> roles, string? password = null, byte[]? profileImage = null,
         string? profileImagePath = null)
     {
-        var errors = new List<IError>();
+        var errors = new List<ValidationError>();
         var isValidRole = new HashSet<string> { "Admin", "User", "Manager" };
 
         var guardResult = Guard
@@ -91,7 +91,7 @@ public class User
             errors.AddRange(ValidateImage(profileImage, profileImagePath));
         }
 
-        return errors.OfType<ValidationError>().ToList().AsReadOnly();
+        return errors.AsReadOnly();
     }
 
 
@@ -110,7 +110,7 @@ public class User
             .DoNotThrowOnError();
         });
 
-        return result.Errors.OfType<ValidationError>().ToList();
+        return result.Errors;
     }
 
     public static IReadOnlyList<ValidationError> ValidatePassword(string password)
@@ -130,7 +130,7 @@ public class User
             .DoNotThrowOnError();
         });
 
-        return result.Errors.OfType<ValidationError>().ToList();
+        return result.Errors;
     }
 
     public static IReadOnlyList<ValidationError> ValidateImage(byte[] profileImage, string profileImagePath)
@@ -147,7 +147,7 @@ public class User
             .DoNotThrowOnError();
         });
 
-        return result.Errors.OfType<ValidationError>().ToList();
+        return result.Errors;
     }
 
     public static IReadOnlyList<ValidationError> ValidateRoles(IReadOnlySet<string> roles)
@@ -162,27 +162,47 @@ public class User
                  .DoNotThrowOnError();
              });
 
-        return result.Errors.OfType<ValidationError>().ToList();
+        return result.Errors;
     }
 
-
-    public bool VerifyPassword(string password)
+    public Result<bool> UpdateProfile(string newUsername, byte[] newProfileImage, string newProfileImagePath)
     {
-        return BCrypt.Net.BCrypt.Verify(password, PasswordHash);
-    }
+        var errors = new List<ValidationError>();
 
-    public Result<bool> UpdateProfileImage(byte[] newProfileImage, string newProfileImagePath)
-    {
-        var errors = ValidateImage(newProfileImage, newProfileImagePath);
+        var validationErrors = ValidateImage(newProfileImage, newProfileImagePath);
 
-        if (errors.Any())
+        var result = Guard
+                        .For().Use(guard =>
+                        {
+                            guard
+                            .IsNullOrWhiteSpace(newUsername, "UserName")
+                            .DoNotThrowOnError();
+                        });
+
+        if (validationErrors.Any())
+        {
+            errors.AddRange(validationErrors);
+        }
+
+        if (result.Errors.Any())
+        {
+            errors.AddRange(result.Errors.OfType<ValidationError>().ToList());
+        }
+
+        if (errors.Count != 0)
         {
             return Result.Fail(errors);
         }
 
+        UserName = newUsername;
         ProfileImage = newProfileImage;
         ProfileImagePath = newProfileImagePath;
 
         return true;
+    }
+
+    public bool VerifyPassword(string password)
+    {
+        return BCrypt.Net.BCrypt.Verify(password, PasswordHash);
     }
 }

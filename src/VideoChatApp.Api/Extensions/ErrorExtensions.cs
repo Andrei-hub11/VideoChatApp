@@ -91,7 +91,7 @@ public static class ErrorExtensions
         Title: "One or more validation errors occurred.",
         Type: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
         Status: 400,
-        Detail: "See the errors property for details.",
+        Detail: "See the 'Errors' property for details.",
         Instance: Guid.NewGuid().ToString(),
         Errors: validationErrors
         );

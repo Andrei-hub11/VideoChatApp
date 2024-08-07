@@ -1,4 +1,5 @@
 using VideoChatApp.Api.DependencyInjection;
+using VideoChatApp.Api.Middleware;
 using VideoChatApp.Application;
 using VideoChatApp.Infrastructure;
 
@@ -22,6 +23,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseExceptionHandler();
+app.UseMiddleware<UnauthorizedResponseMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

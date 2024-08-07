@@ -4,7 +4,9 @@ using VideoChatApp.Application.Contracts.Repositories;
 using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Application.DTOMappers;
+using VideoChatApp.Common;
 using VideoChatApp.Common.Utils.Errors;
+using VideoChatApp.Contracts.DapperModels;
 using VideoChatApp.Contracts.Models;
 using VideoChatApp.Contracts.Request;
 using VideoChatApp.Contracts.Response;
@@ -45,13 +47,13 @@ public class AccountService : IAccountService
             profileImage = await _imagesService.GetProfileImageAsync(request.ProfileImage);
 
             var preliminaryUser = User.Create(
-                id: Guid.NewGuid().ToString(), 
+                id: Guid.NewGuid().ToString(),
                 name: request.UserName,
                 email: request.Email,
                 password: request.Password,
                 profileImage: profileImage.ProfileImageBytes,
                 profileImagePath: profileImage.ProfileImagePath,
-                roles: new HashSet<string> { "User"}
+                roles: new HashSet<string> { "User" }
             );
 
             if (preliminaryUser.IsFailure)
@@ -73,7 +75,7 @@ public class AccountService : IAccountService
 
             if (newUser.IsFailure)
             {
-                await _accountServiceErrorHandler.HandleRegistrationFailureAsync(user, user.ProfileImageUrl);
+                await _accountServiceErrorHandler.HandleRegistrationFailureAsync(user, user.ProfileImagePath);
 
                 return Result.Fail(newUser.Errors);
             }
@@ -112,7 +114,7 @@ public class AccountService : IAccountService
 
             var user = User.From(userExisting);
 
-            if(user.IsFailure)
+            if (user.IsFailure)
             {
                 return Result.Fail(user.Errors);
             }
@@ -124,7 +126,7 @@ public class AccountService : IAccountService
 
             var auth = await _keycloakService.LoginUserAync(request, cancellationToken);
 
-            if(auth.IsFailure)
+            if (auth.IsFailure)
             {
                 return Result.Fail(auth.Errors);
             }
@@ -133,6 +135,81 @@ public class AccountService : IAccountService
         }
         catch (Exception)
         {
+            throw;
+        }
+    }
+
+    public async Task<Result<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserRequestDTO request, CancellationToken cancellationToken)
+    {
+        ApplicationUserMapping? userExisting = default;
+        bool isRollback = true;
+
+        try
+        {
+            userExisting = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+
+            if (userExisting == null)
+            {
+                return Result.Fail(UserErrorFactory.UserNotFoundById(userId));
+            }
+
+            var user = User.From(userExisting);
+
+            if (user.IsFailure)
+            {
+                return Result.Fail(user.Errors);
+            }
+
+            var newImageBytes = Base64Helper.ConvertFromBase64String(request.ProfileImage);
+            bool imagesAreDifferent = !newImageBytes.SequenceEqual(user.Value.ProfileImage);
+
+            if (imagesAreDifferent)
+            {
+                var newProfileImage = await _imagesService.GetProfileImageAsync(request.ProfileImage);
+                var result = user.Value.UpdateProfile(request.UserName, newProfileImage.ProfileImageBytes,
+                      newProfileImage.ProfileImagePath);
+
+                if (result.IsFailure)
+                {
+                    return Result.Fail(result.Errors);
+                }
+            }
+
+            if (!imagesAreDifferent)
+            {
+                var result = user.Value.UpdateProfile(request.UserName, userExisting.ProfileImage,
+                    userExisting.ProfileImagePath);
+
+                if (result.IsFailure)
+                {
+                    return Result.Fail(result.Errors);
+                }
+            }
+
+            await _keycloakService.UpdateUserAsync(user.Value, cancellationToken);
+
+            await _userRepository.UpdateApplicationUser(user.Value, cancellationToken);
+
+            _unitOfWork.Commit();
+
+            isRollback = false;
+
+            if (imagesAreDifferent)
+            {
+                await _imagesService.DeleteProfileImageAsync(userExisting.ProfileImagePath);
+            }
+
+            return user.Value.ToDTO();
+        }
+        catch (Exception)
+        {
+            if (userExisting is not null && isRollback)
+            {
+                await _accountServiceErrorHandler.HandleUnexpectedUpdateExceptionAsync(userExisting);
+            }
+
+            _unitOfWork.Rollback();
+
             throw;
         }
     }

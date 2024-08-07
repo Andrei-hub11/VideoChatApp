@@ -157,7 +157,7 @@ public class UserTests
     }
 
     [Fact]
-    public void UpdateProfileImage_ValidData_UpdatesImage()
+    public void UpdateProfile_ValidData_UpdatesImage()
     {
         // Arrange
         var id = "123";
@@ -171,11 +171,10 @@ public class UserTests
         var newProfileImage = new byte[] { 4, 5, 6 };
         var newProfileImagePath = "/images/new-profile.jpg";
 
+        // Act
         Assert.False(user.IsFailure);
-        var result = user.Value.UpdateProfileImage(newProfileImage, newProfileImagePath);
+        user.Value.UpdateProfile(name, newProfileImage, newProfileImagePath);
 
-        // Assert
-        Assert.True(!result.IsFailure);
         Assert.Equal(newProfileImage, user.Value.ProfileImage);
         Assert.Equal(newProfileImagePath, user.Value.ProfileImagePath);
     }
@@ -192,16 +191,19 @@ public class UserTests
         var profileImagePath = "/images/profile.jpg";
         var roles = new HashSet<string> { "User" };
         var user = User.Create(id, name, email, password, profileImage, profileImagePath, roles);
-        var newProfileImage = new byte[0]; 
-        var newProfileImagePath = string.Empty;
+        var newName = "";
+        var invalidProfileImage = new byte[3 * 1024 * 1024]; 
+        var invalidProfileImagePath = string.Empty;
 
         // Act
         Assert.False(user.IsFailure);
-        var result = user.Value.UpdateProfileImage(newProfileImage, newProfileImagePath);
+        var result = user.Value.UpdateProfile(newName, invalidProfileImage, invalidProfileImagePath);
 
         // Assert
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == "ERR_INVALID_PROFILE-IMAGE" 
-        || e.Code == "ERR_INVALID_IMAGE-PATH" || e.Code == "ERR_IS_NULL_OR_EMPTY");
+        Assert.Contains(result.Errors, e => e.Code == "ERR_INVALID_PROFILE-IMAGE");
+        Assert.Contains(result.Errors, e => e.Code == "ERR_IS_NULL_OR_EMPTY");
+        Assert.Equal(3, result.Errors.Count);
     }
+
 }

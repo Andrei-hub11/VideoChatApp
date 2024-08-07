@@ -6,9 +6,9 @@ public partial class Guard
 {
     public class GuardResult
     {
-        public IReadOnlyList<IError> Errors { get; }
+        public IReadOnlyList<ValidationError> Errors { get; }
 
-        internal GuardResult(IReadOnlyList<IError> errors)
+        internal GuardResult(IReadOnlyList<ValidationError> errors)
         {
             Errors = errors;
         }

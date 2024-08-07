@@ -1,7 +1,8 @@
 ﻿using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Application.Contracts.UtillityFactories;
-using VideoChatApp.Contracts.Models;
+using VideoChatApp.Contracts.DapperModels;
 using VideoChatApp.Contracts.Response;
+using VideoChatApp.Domain.Entities;
 
 namespace VideoChatApp.Infrastructure.UtillityFactories;
 
@@ -68,6 +69,65 @@ public class AccountServiceErrorHandler : IAccountServiceErrorHandler
         await _keycloakService.DeleteUserByIdAsync(existingUserResult.Value.Id);
     }
 
+    /// <summary>
+    /// Handles the rollback process when an unexpected exception occurs during a user update operation.
+    /// This method performs the following steps:
+    /// <list type="bullet">
+    ///     <item>
+    ///         <description>Restores the original username and profile image path in the domain model if they were changed during the update operation.</description>
+    ///     </item>
+    ///     <item>
+    ///         <description>If a new profile image was uploaded, this image is deleted from the storage, and the original image path is restored in the domain model.</description>
+    ///     </item>
+    ///     <item>
+    ///         <description>Updates the user in Keycloak with the restored details if there were any changes in the profile image path or username.</description>
+    ///     </item>
+    /// </list>
+    /// </summary>
+    /// <param name="user">An instance of <see cref="ApplicationUserMapping"/> representing the user details including email, username, and profile image path.
+    /// This instance is used to restore the original profile details and handle the cleanup process.</param>
+    /// <returns>A task that represents the asynchronous operation. The task does not return a value. If an error occurs during the rollback process, it is logged or handled appropriately. 
+    /// This method does not propagate exceptions but ensures that cleanup actions are performed to maintain consistency.</returns>
+    public async Task HandleUnexpectedUpdateExceptionAsync(ApplicationUserMapping user)
+    {
+        var existingUserResult = await _keycloakService.GetUserByEmailAsync(user.Email);
+
+        if (existingUserResult.IsFailure)
+        {
+            return;
+        }
+
+        var existingUser = existingUserResult.Value;
+
+        var userDomain = User.From(user);
+
+        if (userDomain.IsFailure)
+        {
+            return;
+        }
+
+        // Restore the original username and profile image path in the domain model
+        var updateResult = userDomain.Value.UpdateProfile(user.UserName, [1], user.ProfileImagePath);
+
+        if (updateResult.IsFailure)
+        {
+            // Log or handle the failure to update the domain model if necessary
+            return;
+        }
+
+        // Delete the new profile image if it exists and revert to the original path
+        if (!string.IsNullOrWhiteSpace(user.ProfileImagePath) &&
+            existingUser.ProfileImagePath != user.ProfileImagePath)
+        {
+            if (!string.IsNullOrWhiteSpace(existingUser.ProfileImagePath))
+            {
+                await _imagesService.DeleteProfileImageAsync(existingUser.ProfileImagePath);
+            }
+        }
+
+        // Update Keycloak only if there are changes
+        await _keycloakService.UpdateUserAsync(userDomain.Value);
+    }
 }
 
 

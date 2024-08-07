@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 using VideoChatApp.Api.Extensions;
-using VideoChatApp.Application.Common.Result;
 using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Contracts.Request;
 
@@ -44,7 +44,7 @@ public class AccountController : ControllerBase
         var result = await _accountService.RegisterUserAsync(request, cancellationToken);
 
         return result.Match(
-            onSuccess: (user) => Ok(user),
+            onSuccess: (authResponse) => Ok(authResponse),
             onFailure: (errors) => errors.ToProblemDetailsResult());
     }
 
@@ -52,8 +52,19 @@ public class AccountController : ControllerBase
     public async Task<IActionResult> Login([FromBody] UserLoginRequestDTO request,
         CancellationToken cancellationToken)
     {
-
         var result = await _accountService.LoginUserAsync(request, cancellationToken);
+
+        return result.Match(
+            onSuccess: (authResponse) => Ok(authResponse),
+            onFailure: (errors) => errors.ToProblemDetailsResult());
+    }
+
+    [Authorize]
+    [HttpPut("profile/{userId}")]
+    public async Task<IActionResult> UpdateUserAsync([FromBody] UpdateUserRequestDTO request, string userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _accountService.UpdateUserAsync(userId, request, cancellationToken);
 
         return result.Match(
             onSuccess: (user) => Ok(user),

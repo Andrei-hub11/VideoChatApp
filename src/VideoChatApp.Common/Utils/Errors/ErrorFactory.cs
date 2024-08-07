@@ -25,6 +25,25 @@ public sealed class ErrorFactory
         return Error.Unexpected("An unknown error has occurred.", "ERR_UNKNOWN");
     }
 
+    ///// <summary>
+    ///// Creates a not found error for a user by keycloak client.
+    ///// </summary>
+    ///// <param name="id">The user identifier.</param>
+    ///// <returns>An <see cref="Error"/> instance representing a user not found error.</returns>
+    //public static Error ClientNotFoundById(string id)
+    //{
+    //    return Error.NotFound($"O keycloak client with id = '{id}' was not found.", "ERR_CLIENT_NOT_FOUND");
+    //}
+
+    /// <summary>
+    /// Creates a not found error for a keycloak client.
+    /// </summary>
+    /// <returns>An <see cref="Error"/> instance representing a user not found error.</returns>
+    public static Error ClientNotFound()
+    {
+        return Error.NotFound($"O keycloak client was not found.", "ERR_CLIENT_NOT_FOUND");
+    }
+
     /// <summary>
     /// Creates a not found error for a specific resource.
     /// </summary>

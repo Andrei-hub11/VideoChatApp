@@ -16,6 +16,7 @@ using VideoChatApp.Application.Extensions;
 using VideoChatApp.Application.Common.Result;
 using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Common.Utils.Errors;
+using VideoChatApp.Domain.Entities;
 
 namespace VideoChatApp.Application.Services.Keycloak;
 
@@ -24,15 +25,18 @@ public class KeycloakService : IKeycloakService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly IErrorMapper _errorMapper;
+    private readonly IKeycloakServiceErrorHandler _keycloakServiceErrorHandler;
     private readonly TimeSpan _tokenExpiryBuffer = TimeSpan.FromMinutes(1);
     private KeycloakToken _cachedToken = default!;
     private DateTimeOffset _tokenExpiration = DateTimeOffset.MinValue;
 
-    public KeycloakService(HttpClient httpClient, IConfiguration configuration, IErrorMapper errorMapper)
+    public KeycloakService(HttpClient httpClient, IConfiguration configuration, IErrorMapper errorMapper, 
+        IKeycloakServiceErrorHandler keycloakServiceErrorHandler)
     {
         _httpClient = httpClient;
         _configuration = configuration;
         _errorMapper = errorMapper;
+        _keycloakServiceErrorHandler = keycloakServiceErrorHandler;
     }
 
     public async Task<IReadOnlyList<UserResponseDTO>> GetAllUsersAsync()
@@ -69,7 +73,8 @@ public class KeycloakService : IKeycloakService
             },
                 attributes = new Dictionary<string, string>
                 {
-                    ["profile-image-url"] = profileImageUrl
+                    ["profileImagePath"] = profileImageUrl,
+                    ["normalizedUserName"] = request.UserName
                 }
             };
 
@@ -204,9 +209,9 @@ public class KeycloakService : IKeycloakService
 
         var users = JsonConvert.DeserializeObject<List<UserMapping>>(jsonResponse);
 
-        if (users == null || users.Count == 0)
+        if (users == null)
         {
-            throw new NotFoundException("User not found");
+            throw new NotFoundException("Users not found");
         }
 
         return users;
@@ -439,7 +444,7 @@ public class KeycloakService : IKeycloakService
 
         if (clientMappingsResponse?.ClientMappings == null || !clientMappingsResponse.ClientMappings.ContainsKey("chat-app-client"))
         {
-            throw new BadRequestException($"Client chat-app-client not found or mappings empty.");
+            throw new BadRequestException($"Client not found or mappings empty.");
         }
 
         var mappings = clientMappingsResponse.ClientMappings["chat-app-client"].Mappings;
@@ -463,14 +468,9 @@ public class KeycloakService : IKeycloakService
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            var errorObj = JObject.Parse(errorContent);
-            var errorMessage = errorObj["error"]?.ToString();
+            var result = await _keycloakServiceErrorHandler.HandleNotFoundErrorAsync(response, userId);
 
-            if (errorMessage == "User not found")
-            {
-                return Result.Fail(UserErrorFactory.UserNotFoundById(userId));
-            }
+            return Result.Fail(result.Errors);
         }
 
         if (!response.IsSuccessStatusCode)
@@ -549,6 +549,42 @@ public class KeycloakService : IKeycloakService
         {
             var error = await response.Content.ReadAsStringAsync();
             throw new BadRequestException($"Failed to add role to user: {response.StatusCode}, {error}");
+        }
+    }
+
+    public async Task UpdateUserAsync(User user, CancellationToken? cancellationToken = null)
+    {
+        cancellationToken?.ThrowIfCancellationRequested();
+        var tokenResponse = await GetAdminTokenAsync();
+
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+
+        var updateUserUrl = $"http://localhost:8080/admin/realms/chat-app/users/{user.Id}";
+
+        // warning: sending email, even if it is not actually being updated, to avoid deleting this field in keycloak
+
+        var updatedUser = new
+        {
+            username = user.UserName,
+            email = user.Email,
+            attributes = new Dictionary<string, string>
+            {
+                ["profileImagePath"] = user.ProfileImagePath,
+                ["normalizedUserName"] = user.UserName
+            }
+        };
+
+        var json = JsonConvert.SerializeObject(updatedUser);
+
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+
+        var response = await _httpClient.PutAsync(updateUserUrl, content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to update user {user.Id}: {response.StatusCode}, {errorContent}");
         }
     }
 

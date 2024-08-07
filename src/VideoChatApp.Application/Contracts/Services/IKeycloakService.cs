@@ -2,6 +2,7 @@
 using VideoChatApp.Contracts.Models;
 using VideoChatApp.Contracts.Request;
 using VideoChatApp.Contracts.Response;
+using VideoChatApp.Domain.Entities;
 
 namespace VideoChatApp.Application.Contracts.Services;
 
@@ -12,5 +13,6 @@ public interface IKeycloakService
     Task<Result<AuthResponseDTO>> RegisterUserAync(UserRegisterRequestDTO requestDTO, string profileImageUrl,
         CancellationToken cancellationToken);
     Task<Result<AuthResponseDTO>> LoginUserAync(UserLoginRequestDTO request, CancellationToken cancellationToken);
+    Task UpdateUserAsync(User user, CancellationToken? cancellationToken = null);
     Task<bool> DeleteUserByIdAsync(string userId);
 }

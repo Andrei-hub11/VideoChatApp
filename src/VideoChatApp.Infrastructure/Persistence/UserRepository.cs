@@ -21,9 +21,43 @@ public class UserRepository : IUserRepository
         _transaction = transaction;
     }
 
+    public async Task<ApplicationUserMapping?> GetUserByIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        const string query = @"SELECT u.Id, u.UserName, u.Email, u.PasswordHash, u.ProfileImage,
+        u.ProfileImagePath, ur.Name as RoleName
+        FROM ApplicationUsers u
+        LEFT JOIN ApplicationUserRoles ur ON u.Id = ur.UserId
+        WHERE u.Id = @Id";
+
+        var userDictionary = new Dictionary<string, ApplicationUserMapping>();
+
+        var result = await Connection.QueryAsync<ApplicationUserMapping, string, ApplicationUserMapping>(
+            new CommandDefinition(query, new { Id = userId }, cancellationToken: cancellationToken, transaction: Transaction),
+            (user, role) =>
+            {
+                if (!userDictionary.TryGetValue(user.Id, out var userEntry))
+                {
+                    userEntry = user;
+                    userEntry.Roles = new HashSet<string>();
+                    userDictionary.Add(userEntry.Id, userEntry);
+                }
+
+                if (role != null)
+                {
+                    ((HashSet<string>)userEntry.Roles).Add(role);
+                }
+
+                return userEntry;
+            },
+            splitOn: "RoleName");
+
+        return userDictionary.Values.FirstOrDefault();
+    }
+
     public async Task<ApplicationUserMapping?> GetUserByEmailAsync(string userEmail, CancellationToken cancellationToken)
     {
-        const string query = @"SELECT u.Id, u.UserName, u.Email, u.PasswordHash, u.ProfileImagePath, ur.Name as RoleName
+        const string query = @"SELECT u.Id, u.UserName, u.Email, u.PasswordHash, u.ProfileImage,
+        u.ProfileImagePath, ur.Name as RoleName
         FROM ApplicationUsers u
         LEFT JOIN ApplicationUserRoles ur ON u.Id = ur.UserId
         WHERE u.Email = @Email";
@@ -91,6 +125,26 @@ public class UserRepository : IUserRepository
             }, transaction: Transaction);
         }
     }
+
+    public async Task<bool> UpdateApplicationUser(User user, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        const string query = @"UPDATE ApplicationUsers SET UserName = @UserName,
+        ProfileImage = @ProfileImage, ProfileImagePath = @ProfileImagePath
+        WHERE Id = @Id";
+
+        int result = await Connection.ExecuteAsync(query, new
+        {
+            user.Id,
+            user.UserName,
+            user.ProfileImage,
+            user.ProfileImagePath,
+        }, transaction: Transaction);
+
+        return result > 0;
+    }
+
 
     public Task<User> GetUserById(string id)
     {

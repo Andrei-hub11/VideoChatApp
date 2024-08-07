@@ -1,4 +1,4 @@
-The section of the documentation below explains the authentication process of the application. It provides details on how new users can register and obtain authentication tokens, which are necessary for accessing protected resources within the application.
+The section of the documentation below explains the authentication process for the application. It outlines how users can register, log in, and manage their profiles. This includes obtaining authentication tokens required for accessing protected resources within the application. Detailed information on request formats, response examples, and error handling is provided to ensure a smooth integration with the authentication system.
 
 # Endpoints:
 
@@ -14,7 +14,7 @@ The section of the documentation below explains the authentication process of th
 "UserName": "Nome do Usuário",
 "Email": "email@example.com",
 "Password": "senha",
-"ProfileImage": "base64"
+"ProfileImage": "base64_string_of_image"
 }
 ```
 
@@ -32,9 +32,6 @@ The section of the documentation below explains the authentication process of th
   "RefreshToken": "dGVzdF9yZWZyZXNoX3Rva2Vu...",
   "Roles": [
     {
-      "Name": "Admin"
-    },
-    {
       "Name": "User"
     }
   ]
@@ -43,7 +40,7 @@ The section of the documentation below explains the authentication process of th
 
 - **Error Response:**
 
-If the registration fails, the response will include error details in the ProblemDetails format.
+If the registration fails, the response will include errors details like this:
 
 ```
 {
@@ -67,7 +64,7 @@ If the registration fails, the response will include error details in the Proble
 }
 ```
 
-- **Error Response (404 Not Found):**
+- **Error Response (409 Not Found):**
 
 ```
 {
@@ -118,7 +115,7 @@ If the registration fails, the response will include error details in the Proble
 
 - **Error Response:**
 
-If the registration fails, the response will include error details in the ProblemDetails format.
+If the login fails, the response will include errors details like this:
 
 ```
 {
@@ -140,8 +137,6 @@ If the registration fails, the response will include error details in the Proble
 
 - **Error Response (404 Not Found):**
 
-If the user is not found, the response will include error details in the ProblemDetails format.
-
 ```
 {
     "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
@@ -149,5 +144,76 @@ If the user is not found, the response will include error details in the Problem
     "Status": 404,
     "Detail": "User with email = 'app_user5453111@test.com' was not found.",
     "Instance": "6242a7e7-8d11-47b6-a8e5-576ff3c52134"
+}
+```
+
+### Update User Profile
+
+- URL: /api/v1/account/profile
+- HTTP Method: POST
+- Authentication Header: Required (Bearer token).
+- Request Body (JSON):
+
+```
+{
+  "UserName": "new_username",
+  "ProfileImage": "base64_string_of_image"
+}
+```
+
+- **Success Response (200 OK):**
+
+```
+{
+  "Id": "1a2b3c4d",
+  "UserName": "john_doe",
+  "Email": "john.doe@example.com",
+  "ProfileImageUrl": "https://example.com/images/john_doe.jpg"
+}
+```
+
+- **Success Response (401 Unauthorized):**
+
+If the update fails, the response will include errors details like this:
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+  "Title": "You do not have access to this feature, or have not yet logged in",
+  "Status": 401,
+  "Detail": "An authentication error has occurred. Please check your credentials and try again.",
+  "Instance": "55405af7-3693-452c-b299-6094b20c625d"
+}
+```
+
+- **Error Response (404 Not Found):**
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+  "Title": "ERR_USER_NOT_FOUND",
+  "Status": 404,
+  "Detail": "User with id = '3f8bb3c1-a42e-4ed6-92b3-90c1b216365' was not found.",
+  "Instance": "13f05fff-c52c-465c-b47e-933c6d3ec23f"
+}
+```
+
+- **Error Response (422 Unprocessable Entity):**
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422",
+  "Title": "One or more validation errors occurred.",
+  "Status": 422,
+  "Detail": "See the 'Errors' property for details.",
+  "Instance": "1f87e0f0-5625-4762-b307-e33e5d5b1d35",
+  "Errors": {
+    "UserName": [
+      {
+        "Code": "ERR_IS_NULL_OR_EMPTY",
+        "Description": "UserName cannot be null or empty"
+      }
+    ]
+  }
 }
 ```

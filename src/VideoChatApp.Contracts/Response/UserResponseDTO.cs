@@ -1,3 +1,7 @@
 ﻿namespace VideoChatApp.Contracts.Response;
 
-public sealed record UserResponseDTO(string Id, string UserName, string Email, string ProfileImageUrl);
+public sealed record UserResponseDTO(
+    string Id, 
+    string UserName, 
+    string Email, 
+    string ProfileImagePath);

@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using Serilog.Filters;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -80,11 +80,9 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddKeycloakPolicy(this IServiceCollection services)
     {
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy("Admin", policy =>
+        services.AddAuthorizationBuilder()
+            .AddPolicy("Admin", policy =>
                 policy.RequireAssertion(context => context.User.HasRole("Admin")));
-        });
 
         return services;
     }
@@ -93,6 +91,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IErrorMapper, ErrorMapper>();
         services.AddScoped<IAccountServiceErrorHandler, AccountServiceErrorHandler>();
+        services.AddScoped<IKeycloakServiceErrorHandler, KeycloakServiceErrorHandler>();
 
         return services;
     }
