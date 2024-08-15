@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 using System.Net;
 
@@ -18,7 +17,7 @@ public class UnauthorizedResponseMiddleware
     {
         await _next(httpContext);
 
-        if (httpContext.Response.StatusCode == (int)HttpStatusCode.Unauthorized)
+        if (httpContext.Response.StatusCode == (int)HttpStatusCode.Unauthorized && !httpContext.Response.HasStarted)
         {
             var response = new ProblemDetails
             {

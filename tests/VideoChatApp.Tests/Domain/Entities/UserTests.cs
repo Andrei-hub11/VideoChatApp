@@ -156,8 +156,17 @@ public class UserTests
         Assert.False(result);
     }
 
-    [Fact]
-    public void UpdateProfile_ValidData_UpdatesImage()
+    [Theory]
+    [InlineData("New Name", null, null, "New Name", new byte[] { 1, 2, 3 }, "/images/profile.jpg")] // Apenas o nome de usuário é atualizado
+    [InlineData(null, new byte[] { 4, 5, 6 }, "/images/new-profile.jpg", "John Doe", new byte[] { 4, 5, 6 }, "/images/new-profile.jpg")] // Apenas a imagem de perfil e o caminho são atualizados
+    [InlineData("New Name", new byte[] { 7, 8, 9 }, "/images/newer-profile.jpg", "New Name", new byte[] { 7, 8, 9 }, "/images/newer-profile.jpg")] // Nome de usuário, imagem e caminho são atualizados
+    public void UpdateProfile_ValidData_UpdatesCorrectFields(
+        string? newName,
+        byte[]? newProfileImage,
+        string? newProfileImagePath,
+        string expectedName,
+        byte[] expectedProfileImage,
+        string expectedProfileImagePath)
     {
         // Arrange
         var id = "123";
@@ -168,19 +177,25 @@ public class UserTests
         var profileImagePath = "/images/profile.jpg";
         var roles = new HashSet<string> { "User" };
         var user = User.Create(id, name, email, password, profileImage, profileImagePath, roles);
-        var newProfileImage = new byte[] { 4, 5, 6 };
-        var newProfileImagePath = "/images/new-profile.jpg";
 
         // Act
         Assert.False(user.IsFailure);
-        user.Value.UpdateProfile(name, newProfileImage, newProfileImagePath);
+        user.Value.UpdateProfile(newName, newProfileImage, newProfileImagePath);
 
-        Assert.Equal(newProfileImage, user.Value.ProfileImage);
-        Assert.Equal(newProfileImagePath, user.Value.ProfileImagePath);
+        // Assert
+        Assert.Equal(expectedName, user.Value.UserName);
+        Assert.Equal(expectedProfileImage, user.Value.ProfileImage);
+        Assert.Equal(expectedProfileImagePath, user.Value.ProfileImagePath);
     }
 
-    [Fact]
-    public void UpdateProfileImage_InvalidData_ReturnsFailure()
+
+    [Theory]
+    [MemberData(nameof(GetInvalidProfileUpdateData))]
+    public void UpdateProfile_InvalidData_ReturnsFailure(
+        string? newUsername,
+        byte[]? newProfileImage,
+        string? newProfileImagePath,
+        string[] expectedErrorCodes)
     {
         // Arrange
         var id = "123";
@@ -191,19 +206,26 @@ public class UserTests
         var profileImagePath = "/images/profile.jpg";
         var roles = new HashSet<string> { "User" };
         var user = User.Create(id, name, email, password, profileImage, profileImagePath, roles);
-        var newName = "";
-        var invalidProfileImage = new byte[3 * 1024 * 1024]; 
-        var invalidProfileImagePath = string.Empty;
 
         // Act
         Assert.False(user.IsFailure);
-        var result = user.Value.UpdateProfile(newName, invalidProfileImage, invalidProfileImagePath);
+        var result = user.Value.UpdateProfile(newUsername, newProfileImage, newProfileImagePath);
 
         // Assert
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == "ERR_INVALID_PROFILE-IMAGE");
-        Assert.Contains(result.Errors, e => e.Code == "ERR_IS_NULL_OR_EMPTY");
-        Assert.Equal(3, result.Errors.Count);
+        foreach (var errorCode in expectedErrorCodes)
+        {
+            Assert.Contains(result.Errors, e => e.Code == errorCode);
+        }
+
+        Assert.Equal(expectedErrorCodes.Length, result.Errors.Count);
     }
 
+    public static IEnumerable<object[]?> GetInvalidProfileUpdateData()
+    {
+        yield return new object[] { "", default!, default!, new[] { "ERR_IS_NULL_OR_EMPTY" } };
+        yield return new object[] { default!, new byte[3 * 1024 * 1024], "/images/profile.jpg", new[] { "ERR_INVALID_PROFILE-IMAGE" } };
+        yield return new object[] { "New Name", new byte[] { 1, 2, 3 }, "", new[] { "ERR_IS_NULL_OR_EMPTY" } };
+        yield return new object[] { "New Name", new byte[] { 1, 2, 3 }, "", new[] { "ERR_IS_NULL_OR_EMPTY" } };
+    }
 }

@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
      public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services
+            .AddHttpContextAccessor()
             .AddPersistence()
             .AddSerilog(configuration)
             .AddHttpClient()

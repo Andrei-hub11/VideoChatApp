@@ -6,6 +6,7 @@ using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Application.DTOMappers;
 using VideoChatApp.Common;
 using VideoChatApp.Common.Utils.Errors;
+using VideoChatApp.Common.Utils.ResultError;
 using VideoChatApp.Contracts.DapperModels;
 using VideoChatApp.Contracts.Models;
 using VideoChatApp.Contracts.Request;
@@ -30,6 +31,30 @@ public class AccountService : IAccountService
         _keycloakService = keycloakService;
         _imagesService = imagesService;
         _accountServiceErrorHandler = accountServiceErrorHandler;
+    }
+
+    public async Task<Result<UserResponseDTO>> GetUserAsync(string accessToken, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(accessToken)) 
+            {
+                return Result.Fail(Error.Unauthorized("Access token is missing.", "ERR_UNAUTHORIZED_ACCESS"));
+            }
+
+            var userInfo = await _keycloakService.GetUserInfoAsync(accessToken, cancellationToken);
+
+            if (userInfo.IsFailure)
+            {
+                return Result.Fail(userInfo.Errors);
+            }
+
+            return userInfo.Value.ToResponseDTO();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     public async Task<Result<AuthResponseDTO>> RegisterUserAsync(UserRegisterRequestDTO request, CancellationToken cancellationToken)
@@ -71,7 +96,7 @@ public class AccountService : IAccountService
             var (user, _, _, roles) = authResult.Value;
 
             var newUser = User.Create(user.Id, user.UserName, user.Email, request.Password,
-                profileImage.ProfileImageBytes, profileImage.ProfileImagePath, roles.ToHashSetString());
+                profileImage.ProfileImageBytes, profileImage.ProfileImagePath, roles);
 
             if (newUser.IsFailure)
             {
@@ -139,6 +164,26 @@ public class AccountService : IAccountService
         }
     }
 
+    public async Task<Result<UpdateAccessTokenResponseDTO>> UpdateAccessTokenAsync(UpdateAccessTokenRequestDTO request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return Result.Fail(ErrorFactory.CreateValidationError("RefreshToken not provider",
+                    nameof(request.RefreshToken)));
+            }
+
+            var result = await _keycloakService.RefreshAccessTokenAsync(request.RefreshToken, cancellationToken);
+
+            return new UpdateAccessTokenResponseDTO(result.AccessToken);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
     public async Task<Result<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserRequestDTO request, CancellationToken cancellationToken)
     {
         ApplicationUserMapping? userExisting = default;
@@ -199,7 +244,7 @@ public class AccountService : IAccountService
                 await _imagesService.DeleteProfileImageAsync(userExisting.ProfileImagePath);
             }
 
-            return user.Value.ToDTO();
+            return user.Value.ToResponseDTO();
         }
         catch (Exception)
         {

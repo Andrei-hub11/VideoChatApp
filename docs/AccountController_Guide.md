@@ -2,6 +2,38 @@ The section of the documentation below explains the authentication process for t
 
 # Endpoints:
 
+### Get User Profile
+
+- URL: /api/v1/profile
+- HTTP Method: GET
+- Authentication Header: Required (Bearer token).
+- Description: Retrieves the profile information of the currently authenticated user
+
+- **Success Response (200 OK):**
+
+```
+{
+  "Id": "1a2b3c4d",
+  "UserName": "john_doe",
+  "Email": "john.doe@example.com",
+  "ProfileImagePath": "users/images/293ba48b-669b-4a91-9d2f-f2eefd92b90a.jpg"
+}
+```
+
+If the update fails, the response will include errors details like this:
+
+- **Error Response (401 Unauthorized):**
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+  "Title": "You do not have access to this feature, or have not yet logged in",
+  "Status": 401,
+  "Detail": "An authentication error has occurred. Please check your credentials and try again.",
+  "Instance": "55405af7-3693-452c-b299-6094b20c625d"
+}
+```
+
 ### User Register
 
 - URL: /api/v1/account/register
@@ -26,21 +58,19 @@ The section of the documentation below explains the authentication process for t
     "Id": "1a2b3c4d",
     "UserName": "john_doe",
     "Email": "john.doe@example.com",
-    "ProfileImageUrl": "https://example.com/images/john_doe.jpg"
+    "ProfileImagePath": "users/images/293ba48b-669b-4a91-9d2f-f2eefd92b90a.jpg"
   },
   "AccessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "RefreshToken": "dGVzdF9yZWZyZXNoX3Rva2Vu...",
   "Roles": [
-    {
-      "Name": "User"
-    }
-  ]
+        "User"
+    ]
 }
 ```
 
-- **Error Response:**
-
 If the registration fails, the response will include errors details like this:
+
+- **Error Response (422 Unprocessable Entity):**
 
 ```
 {
@@ -98,18 +128,13 @@ If the registration fails, the response will include errors details like this:
     "Id": "1a2b3c4d",
     "UserName": "john_doe",
     "Email": "john.doe@example.com",
-    "ProfileImageUrl": "https://example.com/images/john_doe.jpg"
+    "ProfileImagePath": "users/images/293ba48b-669b-4a91-9d2f-f2eefd92b90a.jpg"
   },
   "AccessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "RefreshToken": "dGVzdF9yZWZyZXNoX3Rva2Vu...",
   "Roles": [
-    {
-      "Name": "Admin"
-    },
-    {
-      "Name": "User"
-    }
-  ]
+        "User"
+    ]
 }
 ```
 
@@ -147,6 +172,47 @@ If the login fails, the response will include errors details like this:
 }
 ```
 
+### Refresh Access Token
+
+- URL: /api/v1/token-renew
+- HTTP Method: POST
+- Authentication Header: Required (Bearer token).
+- Request Body (JSON):
+
+```
+{
+  "RefreshToken": "current_refresh_token"
+}
+```
+
+- **Success Response (200 OK):**
+
+```
+{
+  "AccessToken": "new_access_token"
+}
+```
+
+- **Error Response (422 Unprocessable Entity):**
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422",
+  "Title": "One or more validation errors occurred.",
+  "Status": 422,
+  "Detail": "See the 'Errors' property for details.",
+  "Instance": "d296d9aa-953c-4564-a72e-dd93e60ff78f",
+  "Errors": {
+    "RefreshToken": [
+      {
+        "Code": "ERR_VALIDATION_FAILURE",
+        "Description": "RefreshToken not provided"
+      }
+    ]
+  }
+}
+```
+
 ### Update User Profile
 
 - URL: /api/v1/account/profile
@@ -168,11 +234,11 @@ If the login fails, the response will include errors details like this:
   "Id": "1a2b3c4d",
   "UserName": "john_doe",
   "Email": "john.doe@example.com",
-  "ProfileImageUrl": "https://example.com/images/john_doe.jpg"
+  "ProfileImagePath": "users/images/293ba48b-669b-4a91-9d2f-f2eefd92b90a.jpg"
 }
 ```
 
-- **Success Response (401 Unauthorized):**
+- **Error Response (401 Unauthorized):**
 
 If the update fails, the response will include errors details like this:
 

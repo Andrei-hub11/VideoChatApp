@@ -10,9 +10,11 @@ public interface IKeycloakService
 {
     Task<Result<UserMapping>> GetUserByEmailAsync(string email);
     Task<IReadOnlyList<UserResponseDTO>> GetAllUsersAsync();
+    Task<Result<UserInfoMapping>> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken);
     Task<Result<AuthResponseDTO>> RegisterUserAync(UserRegisterRequestDTO requestDTO, string profileImageUrl,
         CancellationToken cancellationToken);
     Task<Result<AuthResponseDTO>> LoginUserAync(UserLoginRequestDTO request, CancellationToken cancellationToken);
+    Task<KeycloakToken> RefreshAccessTokenAsync(string refreshToken, CancellationToken cancellationToken);
     Task UpdateUserAsync(User user, CancellationToken? cancellationToken = null);
     Task<bool> DeleteUserByIdAsync(string userId);
 }

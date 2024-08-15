@@ -31,7 +31,6 @@ file_header_template = unset
 
 # IDE0160: Convert to block-scoped namespace
 csharp_style_namespace_declarations = file_scoped:warning
-dotnet_diagnostic.IDE0160.severity = error
 
 # this. and Me. preferences
 dotnet_style_qualification_for_event = false:silent
@@ -368,6 +367,9 @@ dotnet_naming_style.s_camelcase.capitalization = camel_case
 
 
 # Custom configurations
+
+# Enable rules for unnecessary usings
+dotnet_diagnostic.IDE0005.severity = warning
 
 # SA1600: Elements should be documented
 dotnet_diagnostic.SA1600.severity = none

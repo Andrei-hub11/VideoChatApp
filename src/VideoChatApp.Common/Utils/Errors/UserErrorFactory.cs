@@ -54,4 +54,35 @@ public sealed class UserErrorFactory
     {
         return Error.Conflict($"The email '{email}' is already registered.", "ERR_EMAIL_CONFLICT");
     }
+
+    /// <summary>
+    /// Creates an unauthorized error indicating that the user needs to authenticate to access a specified resource.
+    /// </summary>
+    /// <param name="resourceName">The name or description of the resource the user attempted to access.</param>
+    /// <returns>An <see cref="Error"/> instance representing an unauthorized access error.</returns>
+    public static Error UnauthorizedAccess(string resourceName)
+    {
+        return Error.Unauthorized($"Authentication required to access the resource '{resourceName}'.", "ERR_UNAUTHORIZED_ACCESS");
+    }
+
+    /// <summary>
+    /// Creates an error indicating that the authentication token may be invalid or expired.
+    /// </summary>
+    /// <param name="resource">The resource or endpoint where the authentication failure occurred.</param>
+    /// <returns>An <see cref="Error"/> instance representing an invalid or expired token error.</returns>
+    public static Error InvalidOrExpiredToken(string resource)
+    {
+        return Error.Unauthorized($"The authentication token may be invalid or expired while accessing '{resource}'.", "ERR_INVALID_OR_EXPIRED_TOKEN");
+    }
+
+
+    ///// <summary>
+    ///// Creates a forbidden error indicating that the user does not have access to a specified resource.
+    ///// </summary>
+    ///// <param name="resourceName">The name or description of the resource the user attempted to access.</param>
+    ///// <returns>An <see cref="Error"/> instance representing a forbidden access error.</returns>
+    //public static Error AccessDenied(string resourceName)
+    //{
+    //    return Error.Unauthorized($"Access denied to the resource '{resourceName}'.", "ERR_ACCESS_DENIED");
+    //}
 }

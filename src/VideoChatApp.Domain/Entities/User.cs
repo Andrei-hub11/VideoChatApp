@@ -33,7 +33,7 @@ public sealed class User
     {
         var errors = ValidateUser(id, name, email, roles, password, profileImage, profileImagePath);
 
-        if (errors.Any())
+        if (errors.Count != 0)
         {
             return Result.Fail(errors);
         }
@@ -70,8 +70,8 @@ public sealed class User
             .Use((guard) =>
             {
                 guard.IsNullOrWhiteSpace(id)
-                    .IsNullOrWhiteSpace(name)
-                    .MaxLength(name, 120)
+                    .IsNullOrWhiteSpace(name, "UserName")
+                    .MaxLength(name, 120, "UserName")
                     .DoNotThrowOnError();
             });
 
@@ -94,6 +94,37 @@ public sealed class User
         return errors.AsReadOnly();
     }
 
+    private static ReadOnlyCollection<ValidationError> ValidateProfileUpdate(string? newUsername, byte[]? newProfileImage, string? newProfileImagePath)
+    {
+        var errors = new List<ValidationError>();
+
+        if (newProfileImage is not null && newProfileImagePath is not null && newProfileImage.Length > 0)
+        {
+            errors.AddRange(ValidateImage(newProfileImage, newProfileImagePath));
+        }
+
+        Guard.GuardResult result = default!;
+
+        if (newUsername is not null)
+        {
+            result = Guard
+            .For()
+            .Use(guard =>
+            {
+                guard
+                .IsNullOrWhiteSpace(newUsername, "UserName")
+                .MaxLength(newUsername, 120, "UserName")
+                .DoNotThrowOnError();
+            });
+        }
+
+        if (result is not null && result.Errors.Any())
+        {
+            errors.AddRange(result.Errors);
+        }
+
+        return errors.AsReadOnly();
+    }
 
     public static IReadOnlyList<ValidationError> ValidateEmail(string email)
     {
@@ -165,38 +196,19 @@ public sealed class User
         return result.Errors;
     }
 
-    public Result<bool> UpdateProfile(string newUsername, byte[] newProfileImage, string newProfileImagePath)
+    public Result<bool> UpdateProfile(string? newUsername = null, 
+        byte[]? newProfileImage = null, string? newProfileImagePath = null)
     {
-        var errors = new List<ValidationError>();
-
-        var validationErrors = ValidateImage(newProfileImage, newProfileImagePath);
-
-        var result = Guard
-                        .For().Use(guard =>
-                        {
-                            guard
-                            .IsNullOrWhiteSpace(newUsername, "UserName")
-                            .DoNotThrowOnError();
-                        });
-
-        if (validationErrors.Any())
-        {
-            errors.AddRange(validationErrors);
-        }
-
-        if (result.Errors.Any())
-        {
-            errors.AddRange(result.Errors.OfType<ValidationError>().ToList());
-        }
+        var errors = ValidateProfileUpdate(newUsername, newProfileImage, newProfileImagePath);
 
         if (errors.Count != 0)
         {
             return Result.Fail(errors);
         }
 
-        UserName = newUsername;
-        ProfileImage = newProfileImage;
-        ProfileImagePath = newProfileImagePath;
+        UserName = newUsername ?? UserName;
+        ProfileImage = newProfileImage ?? ProfileImage;
+        ProfileImagePath = newProfileImagePath ?? ProfileImagePath;
 
         return true;
     }

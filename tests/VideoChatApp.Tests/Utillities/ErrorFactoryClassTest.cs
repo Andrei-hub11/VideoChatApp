@@ -33,6 +33,32 @@ public class ErrorFactoryTests
     }
 
     [Fact]
+    public void CreateValidationErrorRequest_ShouldReturnValidationError()
+    {
+        // Arrange
+        var description = "Token not provider";
+
+        // Act
+        var error = ErrorFactory.CreateValidationError(description, "Token");
+
+        // Assert
+        Assert.Equal("ERR_VALIDATION_FAILURE", error.Code);
+        Assert.Equal("Token", error.Field);
+        Assert.Equal(description, error.Description);
+    }
+
+    [Fact]
+    public void CreateClientNotFound_ShouldReturnNotFoundError()
+    {
+        // Act
+        var error = ErrorFactory.ClientNotFound();
+
+        // Assert
+        Assert.Equal("ERR_CLIENT_NOT_FOUND", error.Code);
+        Assert.Equal("O keycloak client was not found.", error.Description);
+    }
+
+    [Fact]
     public void UnknownError_ShouldReturnUnexpectedError()
     {
         // Act

@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
-
-using NerdCritica.Application.Services.ImageServiceConfiguration;
+﻿using NerdCritica.Application.Services.ImageServiceConfiguration;
 
 using VideoChatApp.Api.Middleware;
 using VideoChatApp.Application.Contracts.Services;

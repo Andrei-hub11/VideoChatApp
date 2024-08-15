@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using VideoChatApp.Api.Extensions;
@@ -16,6 +18,19 @@ public class AccountController : ControllerBase
     public AccountController(IAccountService accountService)
     {
         _accountService = accountService;
+    }
+
+    [Authorize]
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
+    {
+        var accessToken = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+
+        var result = await _accountService.GetUserAsync(accessToken, cancellationToken);
+
+        return result.Match(
+            onSuccess: (user) => Ok(user),
+            onFailure: (errors) => errors.ToProblemDetailsResult());
     }
 
     //[Authorize(Policy = "Admin")]
@@ -56,6 +71,17 @@ public class AccountController : ControllerBase
 
         return result.Match(
             onSuccess: (authResponse) => Ok(authResponse),
+            onFailure: (errors) => errors.ToProblemDetailsResult());
+    }
+
+    [HttpPost("token-renew")]
+    public async Task<IActionResult> RefreshAccessToken([FromBody] UpdateAccessTokenRequestDTO request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _accountService.UpdateAccessTokenAsync(request, cancellationToken);
+
+        return result.Match(
+            onSuccess: (accessToken) => Ok(accessToken),
             onFailure: (errors) => errors.ToProblemDetailsResult());
     }
 

@@ -30,7 +30,7 @@ public class KeycloakService : IKeycloakService
     private KeycloakToken _cachedToken = default!;
     private DateTimeOffset _tokenExpiration = DateTimeOffset.MinValue;
 
-    public KeycloakService(HttpClient httpClient, IConfiguration configuration, IErrorMapper errorMapper, 
+    public KeycloakService(HttpClient httpClient, IConfiguration configuration, IErrorMapper errorMapper,
         IKeycloakServiceErrorHandler keycloakServiceErrorHandler)
     {
         _httpClient = httpClient;
@@ -43,7 +43,7 @@ public class KeycloakService : IKeycloakService
     {
         var users = await GetUsersAsync();
 
-        return users.ToDTO();
+        return users.ToReponseDTO();
     }
 
     public async Task<Result<AuthResponseDTO>> RegisterUserAync(UserRegisterRequestDTO request, string profileImageUrl, CancellationToken cancellationToken)
@@ -82,7 +82,7 @@ public class KeycloakService : IKeycloakService
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync($"http://localhost:8080/admin/realms/chat-app/users", content);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -108,14 +108,14 @@ public class KeycloakService : IKeycloakService
 
             var result = await AddUserToGroupByNameAsync(newUser.Value.Id, "Users");
 
-            if(result.IsFailure)
+            if (result.IsFailure)
             {
                 return Result.Fail(result.Errors);
             }
 
             var groupId = await GetGroupIdByNameAsync("Users");
 
-            if(groupId.IsFailure)
+            if (groupId.IsFailure)
             {
                 return Result.Fail(groupId.Errors);
             }
@@ -133,8 +133,8 @@ public class KeycloakService : IKeycloakService
 
             isRollback = false;
 
-            return new AuthResponseDTO(newUser.Value.ToDTO(), userToken.AccessToken, userToken.RefreshToken, 
-                roles.Value.ToDTO());
+            return new AuthResponseDTO(newUser.Value.ToResponseDTO(), userToken.AccessToken, userToken.RefreshToken,
+                roles.Value.ToResponseDTO());
         }
         catch (Exception)
         {
@@ -181,12 +181,44 @@ public class KeycloakService : IKeycloakService
                 return Result.Fail(roles.Errors);
             }
 
-            return new AuthResponseDTO(user.Value.ToDTO(), AccessToken: userToken.AccessToken,
-                RefreshToken: userToken.RefreshToken, Roles: roles.Value.ToDTO());
-        } catch(Exception)
+            return new AuthResponseDTO(user.Value.ToResponseDTO(), AccessToken: userToken.AccessToken,
+                RefreshToken: userToken.RefreshToken, Roles: roles.Value.ToResponseDTO());
+        }
+        catch (Exception)
         {
             throw;
         }
+    }
+
+    public async Task<KeycloakToken> RefreshAccessTokenAsync(string refreshToken, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var formData = new Dictionary<string, string>
+    {
+        { "client_id", _configuration.GetRequiredValue("UserKeycloakClient:client_id")},
+        { "client_secret", _configuration.GetRequiredValue("UserKeycloakClient:client_secret") },
+        { "grant_type", "refresh_token" },
+        { "refresh_token", refreshToken}
+    };
+
+        var tokenEndpoint = _configuration.GetRequiredValue("UserKeycloakClient:TokenEndpoint");
+
+        var content = new FormUrlEncodedContent(formData);
+        var response = await _httpClient.PostAsync(tokenEndpoint, content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new BadRequestException($"Request failed: {response.StatusCode}, {error}");
+        }
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var tokenResponse = JsonConvert.DeserializeObject<KeycloakToken>(jsonResponse);
+
+        ThrowHelper.ThrowIfNull(tokenResponse);
+
+        return tokenResponse;
     }
 
     private async Task<IEnumerable<UserMapping>> GetUsersAsync()
@@ -273,6 +305,36 @@ public class KeycloakService : IKeycloakService
         }
 
         return users.First();
+    }
+
+    public async Task<Result<UserInfoMapping>> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var apiUrl = "http://localhost:8080/realms/chat-app/protocol/openid-connect/userinfo";
+
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.GetAsync(apiUrl);
+
+        if (!response.IsSuccessStatusCode && response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            return Result.Fail(UserErrorFactory.InvalidOrExpiredToken("/userinfo"));
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new BadRequestException($"Failed to retrieve user details: {response.StatusCode}, {error}");
+        }
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+        var user = JsonConvert.DeserializeObject<UserInfoMapping>(jsonResponse);
+
+        ThrowHelper.ThrowIfNull(user);
+
+        return user;
     }
 
     private async Task<KeycloakToken> GetAdminTokenAsync()

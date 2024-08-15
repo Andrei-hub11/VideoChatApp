@@ -17,6 +17,16 @@ public sealed class ErrorFactory
     }
 
     /// <summary>
+    /// Creates a validation error for generic validation failures.
+    /// </summary>
+    /// <param name="validationMessage">A message describing the validation failure.</param>
+    /// <returns>An <see cref="Error"/> instance representing a validation error.</returns>
+    public static ValidationError CreateValidationError(string validationMessage, string field)
+    {
+        return Error.Validation(validationMessage, "ERR_VALIDATION_FAILURE", field);
+    }
+
+    /// <summary>
     /// Creates an unexpected error for an unknown issue.
     /// </summary>
     /// <returns>An <see cref="Error"/> instance representing an unexpected error.</returns>
@@ -38,7 +48,7 @@ public sealed class ErrorFactory
     /// <summary>
     /// Creates a not found error for a keycloak client.
     /// </summary>
-    /// <returns>An <see cref="Error"/> instance representing a user not found error.</returns>
+    /// <returns>An <see cref="Error"/> instance representing a keycloak client not found error.</returns>
     public static Error ClientNotFound()
     {
         return Error.NotFound($"O keycloak client was not found.", "ERR_CLIENT_NOT_FOUND");

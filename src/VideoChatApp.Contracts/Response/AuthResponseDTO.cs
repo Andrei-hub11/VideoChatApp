@@ -4,4 +4,4 @@ public sealed record AuthResponseDTO(
     UserResponseDTO User, 
     string AccessToken, 
     string RefreshToken, 
-    IReadOnlySet<RoleResponseDTO> Roles);
+    IReadOnlySet<string> Roles);

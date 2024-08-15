@@ -17,6 +17,7 @@ public class ResultTypeTest
         Assert.True(result.IsFailure);
         Assert.Single(result.Errors);
         Assert.Equal(errorMessage, result.Errors[0].Description);
+        Assert.Single(result.Errors);
     }
 
     [Fact]
