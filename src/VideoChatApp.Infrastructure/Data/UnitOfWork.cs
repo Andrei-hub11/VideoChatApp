@@ -7,7 +7,7 @@ using VideoChatApp.Application.Contracts.Repositories;
 
 namespace VideoChatApp.Infrastructure.Data;
 
-public class UnitOfWork : IUnitOfWork
+internal sealed class UnitOfWork : IUnitOfWork
 {
     private readonly DapperContext _dapperContext;
     private readonly IServiceProvider _serviceProvider;
@@ -56,7 +56,8 @@ public class UnitOfWork : IUnitOfWork
         _transaction = _connection.BeginTransaction();
     }
 
-    protected virtual void Dispose(bool disposing)
+    // protected virtual won't be necessary because it's a sealed class
+    private void Dispose(bool disposing)
     {
         if (!_disposed)
         {

@@ -3,7 +3,7 @@ using System.Security.Claims;
 
 namespace VideoChatApp.Infrastructure.Extensions;
 
-public static class ClaimsExtensions
+internal static class ClaimsExtensions
 {
     public static bool HasRole(this ClaimsPrincipal user, string roleName)
     {

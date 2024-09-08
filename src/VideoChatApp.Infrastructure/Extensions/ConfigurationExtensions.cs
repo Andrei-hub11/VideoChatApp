@@ -2,7 +2,7 @@
 
 namespace VideoChatApp.Infrastructure.Extensions;
 
-public static class ConfigurationExtensions
+internal static class ConfigurationExtensions
 {
     public static string GetRequiredValue(this IConfiguration configuration, string key)
     {

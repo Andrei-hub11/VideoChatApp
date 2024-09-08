@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace VideoChatApp.Infrastructure.Data;
 
-public class DapperContext
+internal class DapperContext
 {
     private readonly string _connectionString;
 
