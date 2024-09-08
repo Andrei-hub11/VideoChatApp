@@ -9,13 +9,13 @@ namespace VideoChatApp.Domain.Entities;
 
 public sealed class User
 {
-    public string Id { get; set; } = string.Empty;
-    public string UserName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
-    public string ProfileImagePath { get; set; } = string.Empty;
-    public byte[] ProfileImage { get; set; } = [];
-    public IReadOnlySet<string> Roles { get; set; } = new HashSet<string>();
+    public string Id { get; private set; } = string.Empty;
+    public string UserName { get; private set; } = string.Empty;
+    public string Email { get; private set; } = string.Empty;
+    public string PasswordHash { get; private set; } = string.Empty;
+    public string ProfileImagePath { get; private set; } = string.Empty;
+    public byte[] ProfileImage { get; private set; } = [];
+    public IReadOnlySet<string> Roles { get; private set; } = new HashSet<string>();
 
     private User(string id, string name, string email, string passwordHash, byte[] profileImage, string profileImagePath, IReadOnlySet<string> roles)
     {
