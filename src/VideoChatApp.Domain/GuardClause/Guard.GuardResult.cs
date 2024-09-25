@@ -2,24 +2,12 @@
 
 namespace VideoChatApp.Domain.GuardClause;
 
-public partial class Guard
+public class GuardResult
 {
-    public class GuardResult
+    public IReadOnlyList<ValidationError> Errors { get; }
+
+    internal GuardResult(IReadOnlyList<ValidationError> errors)
     {
-        public IReadOnlyList<ValidationError> Errors { get; }
-
-        internal GuardResult(IReadOnlyList<ValidationError> errors)
-        {
-            Errors = errors;
-        }
-
-        //public Dictionary<string, string[]> ToValidationDictionary()
-        //{
-        //    return Errors.OfType<ValidationError>()
-        //                 .GroupBy(error => error.Field)
-        //                 .ToDictionary(
-        //                     group => group.Key,
-        //                     group => group.Select(error => error.Description).ToArray());
-        //}
+        Errors = errors;
     }
 }

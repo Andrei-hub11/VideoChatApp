@@ -103,7 +103,7 @@ public sealed class User
             errors.AddRange(ValidateImage(newProfileImage, newProfileImagePath));
         }
 
-        Guard.GuardResult result = default!;
+        GuardResult result = default!;
 
         if (newUsername is not null)
         {
@@ -135,7 +135,7 @@ public sealed class User
             .MatchesPattern(
                 email,
                  @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$",
-                "Email inválido",
+                "The 'Email' is invalid",
                 "ERR_EMAIL_INVALID"
                 )
             .DoNotThrowOnError();
@@ -154,7 +154,7 @@ public sealed class User
             .MatchesPattern(
                 password,
                 @"(?:.*[!@#$%^&*]){2,}",
-                "Senha inválida. A senha deve ter pelo menos dois caracteres especiais",
+                "Invalid password. The password must have at least two special characters",
                 "ERR_INVALID_PASSWORD",
                 nameof(password)
                 )
@@ -172,7 +172,7 @@ public sealed class User
             .IsNullOrWhiteSpace(profileImagePath)
             .MaxSize(
              profileImage,
-             2 * 1024 * 1024, "A imagem não pode ter mais que dois 2 megabytes de tamanho",
+             2 * 1024 * 1024, "The image cannot be more than two 2 megabytes in size",
              "ERR_INVALID_PROFILE-IMAGE"
              )
             .DoNotThrowOnError();

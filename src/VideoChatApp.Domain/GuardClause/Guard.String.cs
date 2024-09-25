@@ -51,7 +51,7 @@ public partial class Guard
     {
         if (value.Length < min || value.Length > max)
         {
-            ErrorList.Add(Error.Validation($"{valueExpression} must have at least {min} characters and at most {max}",
+            ErrorList.Add(Error.Validation($"{valueExpression} must be between {min} and {max} characters",
                 "ERR_LENGTH_OUT_OF_RANGE", valueExpression));
         }
 
@@ -88,6 +88,16 @@ public partial class Guard
         if (!Regex.IsMatch(value, pattern))
         {
             ErrorList.Add(Error.Validation(errorMessage, errorCode, valueExpression));
+        }
+
+        return this;
+    }
+
+    public IGuardInternal FailIf(bool condition, string message, string code, string field)
+    {
+        if (condition)
+        {
+            ErrorList.Add(Error.Validation(message, code, field));
         }
 
         return this;

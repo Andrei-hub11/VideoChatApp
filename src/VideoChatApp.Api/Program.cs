@@ -1,5 +1,6 @@
 using VideoChatApp.Api.DependencyInjection;
 using VideoChatApp.Api.Middleware;
+using VideoChatApp.Api.SignalR.Hubs;
 using VideoChatApp.Application;
 using VideoChatApp.Infrastructure;
 
@@ -21,14 +22,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowSpecificOrigin");
 app.UseHttpsRedirection();
 app.UseExceptionHandler();
 app.UseMiddleware<UnauthorizedResponseMiddleware>();
+app.UseMiddleware<WebSocketsMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.UseStaticFiles();
+
+app.MapHub<VideoChatHub>("/videoChatHub");
 
 app.Run();
