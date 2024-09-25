@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 
+// project folders
 /src/VideoChatApp.Api/wwwroot/users/images/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
