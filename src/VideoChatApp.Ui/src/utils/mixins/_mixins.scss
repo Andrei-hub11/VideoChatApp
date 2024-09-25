@@ -1,0 +1,50 @@
+@import "../variables/variable";
+
+@mixin for-size($size) {
+  @if ($size == smaller-phone) {
+    @media (min-width: 20rem) {
+      @content;
+    }
+  } @else if ($size == medium-phone) {
+    @media (min-width: 26.875rem) {
+      @content;
+    }
+  } @else if ($size == phone-only) {
+    @media (min-width: 37.5rem) {
+      @content;
+    }
+  } @else if ($size == tablet-portrait-up) {
+    @media (min-width: 48em) {
+      @content;
+    }
+  } @else if ($size == tablet-landscape-up) {
+    @media (min-width: 56.25em) {
+      @content;
+    }
+  } @else if ($size == desktop-up) {
+    @media (min-width: 80em) {
+      @content;
+    }
+  } @else if ($size == big-desktop-up) {
+    @media (min-width: 1800px) {
+      @content;
+    }
+  }
+}
+
+@mixin service-item() {
+  @media (min-width: 20em) {
+    min-width: clamp(24.2rem, 14.55vi + 19.55rem, 25.8rem);
+    min-height: clamp(25.8rem, 38.18vi + 13.58rem, 30rem);
+  }
+
+  @media (min-width: 26.875em) {
+    min-width: clamp(25.8rem, 10.59vi + 21.25rem, 27.6rem);
+    min-height: clamp(30rem, 11.76vi + 24.94rem, 32rem);
+  }
+
+  @media (min-width: 26.875em) {
+    min-width: clamp(25.8rem, 10.59vi + 21.25rem, 27.6rem);
+    min-height: clamp(30rem, 11.76vi + 24.94rem, 32rem);
+  }
+}

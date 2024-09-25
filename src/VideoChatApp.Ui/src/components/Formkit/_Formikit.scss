@@ -1,0 +1,107 @@
+@import "../../utils/variables/variable";
+
+.form {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  row-gap: 1.2rem;
+  padding: 1rem;
+
+  &__control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    &-container {
+      position: relative;
+    }
+  }
+
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:hover {
+    -webkit-box-shadow: 0 0 0 30px white inset; /* Muda a cor de fundo ao focar ou passar o mouse */
+    -webkit-text-fill-color: $primary-dark-color; /* Cor do texto ao focar ou passar o mouse */
+  }
+
+  input {
+    transition:
+      background-color 0.3s,
+      color 0.3s; /* Suaviza a transição de cores */
+  }
+
+  &__input {
+    font-size: 1.4rem;
+    width: 45.6rem;
+    height: 3.6rem;
+    color: $white-color;
+    background: $primary-dark-color;
+    border-radius: 0.5rem;
+    border: 0.1rem solid $primary-color;
+    outline: 0;
+    padding-left: 1rem;
+    padding-right: 3.4rem;
+    caret-color: $white-color;
+    letter-spacing: 0.1rem;
+
+    &::placeholder {
+      letter-spacing: 0.1rem;
+      font-weight: bold;
+      color: $white-color !important;
+      letter-spacing: 0.1rem;
+    }
+
+    &:focus {
+      border: 0.1rem solid hsla(213, 100%, 82%, 80%);
+    }
+
+    &:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 30px $primary-dark-color inset !important;
+      -webkit-text-fill-color: $white-color !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px $primary-dark-color inset !important;
+      -webkit-text-fill-color: $white-color !important;
+    }
+
+    &-icon {
+      position: absolute;
+      top: 50%;
+      right: 1rem;
+      transform: translateY(-50%);
+    }
+  }
+
+  &__form-input--variant {
+    color: red;
+
+    &:focus {
+      border: 0.2rem solid red;
+    }
+  }
+
+  &__msg {
+    visibility: hidden;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ff0000;
+    letter-spacing: 0.1rem;
+  }
+
+  &__msg--variant {
+    visibility: visible;
+  }
+
+  &__action {
+    margin-top: 1.2rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+}

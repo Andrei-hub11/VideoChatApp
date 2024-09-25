@@ -1,0 +1,52 @@
+@import "../../utils/variables/variable";
+@import "../../utils/mixins/mixins";
+
+.btn {
+  @include for-size(smaller-phone) {
+    color: $white-color;
+    font-size: 1.2rem;
+    border-radius: 2rem;
+    letter-spacing: 0.1rem;
+    border: 0.1rem solid $primary-color;
+    cursor: pointer;
+  }
+
+  @include for-size(medium-phone) {
+    font-size: 1.4rem;
+  }
+
+  @include for-size(phone-only) {
+    font-size: clamp(1.4rem, 1.19vi + 0.69rem, 1.6rem);
+  }
+}
+
+.primary {
+  padding: 0.6rem 2.2rem;
+  font-weight: bold;
+  transition: background 0.5s ease-in-out;
+
+  &:hover {
+    background: $primary-color;
+  }
+
+  @include for-size(medium-phone) {
+    padding: 0.6rem 3rem;
+  }
+
+  @include for-size(tablet-portrait-up) {
+    padding: 0.6rem 3.6rem;
+  }
+}
+
+.btn--action {
+  padding: 0.6rem 14rem;
+  font-weight: bold;
+  transition:
+    background 0.5s ease-in-out,
+    color 0.5s ease-in-out;
+
+  &:hover {
+    background: $primary-color;
+    color: $primary-dark-color;
+  }
+}

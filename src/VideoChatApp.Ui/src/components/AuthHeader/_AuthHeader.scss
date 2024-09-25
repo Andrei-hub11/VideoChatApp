@@ -1,0 +1,41 @@
+@import "../../utils/variables/variable";
+
+.auth-header {
+  margin: 5rem 0 0 20.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  &__container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  &__title {
+    font-size: 3rem;
+    font-family: $headline-font;
+    font-weight: bold;
+    color: $white-color;
+    letter-spacing: 0.1rem;
+
+    & span {
+      color: $primary-color;
+    }
+  }
+
+  &__subtitle {
+    font-size: 2.4rem;
+    font-family: $headline-font;
+    font-weight: bold;
+    color: $white-color;
+    letter-spacing: 0.1rem;
+  }
+
+  &__description {
+    font-size: 1.6rem;
+    color: $white-color;
+    letter-spacing: 0.1rem;
+    width: 34.8rem;
+  }
+}

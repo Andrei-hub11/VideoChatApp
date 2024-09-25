@@ -1,0 +1,107 @@
+@import "./utils/variables/variable";
+
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  text-decoration: none;
+  outline: none;
+  border: none;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 62.5%;
+  overflow-x: hidden !important;
+}
+
+body {
+  background: $bg-color;
+  font-family: $primary-font;
+  overflow-x: hidden !important;
+}
+
+::selection {
+  background-color: $primary-color;
+  color: $bg-color;
+}
+
+// SWAL ALERT
+
+.custom-swal-popup {
+  color: $white-color;
+  background: $primary-dark-color;
+  height: 40rem;
+  width: 34rem;
+}
+
+li {
+  list-style: disc;
+}
+
+.custom-div {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  font-size: 1.6rem;
+  gap: 1rem;
+  width: 26rem;
+
+  & ul {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 27rem;
+    gap: 1rem;
+  }
+
+  & ul div {
+    display: flex;
+    flex-direction: column;
+
+    gap: 1rem;
+  }
+
+  & ul div strong {
+    width: 20rem;
+    text-align: left;
+  }
+
+  & div li {
+    margin: 0 auto;
+    list-style: disc !important;
+    text-align: left;
+    font-size: 1.4rem;
+    width: 24rem;
+  }
+}
+
+.custom-swal-title {
+  font-family: $headline-font;
+}
+
+.custom-swal-popup .swal2-confirm:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.custom-swal-confirm {
+  color: $white-color;
+  font-size: 1.4rem;
+  font-weight: bold;
+  border-radius: 2rem;
+  letter-spacing: 0.1rem;
+  border: 0.2rem solid #2f1273;
+  cursor: pointer;
+  padding: 0.6rem 14rem;
+  background: $primary-dark-color;
+  transition:
+    background 0.5s ease-in-out,
+    color 0.5s ease-in-out;
+  outline: none;
+
+  &:hover {
+    background: #2f1273;
+  }
+}

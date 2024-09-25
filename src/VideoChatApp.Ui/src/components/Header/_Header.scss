@@ -1,0 +1,32 @@
+@import "../../utils/variables/variable";
+
+.header {
+  width: 100%;
+  padding: 1.8rem 11.4rem;
+  border-bottom: 0.5px solid hsla(213, 100%, 82%, 10%);
+
+  &__nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &-title {
+      font-size: 2.4rem;
+      font-family: $headline-font;
+      color: $white-color;
+    }
+  }
+
+  &__profile {
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 50%;
+    cursor: pointer;
+
+    & img {
+      max-inline-size: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+  }
+}

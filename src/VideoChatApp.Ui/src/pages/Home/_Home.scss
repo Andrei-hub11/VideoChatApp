@@ -1,0 +1,55 @@
+@import "../../utils/variables/variable";
+
+.home {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+
+  &__container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 9.4rem;
+
+    &-item {
+      width: 23.4rem;
+      height: 26.6rem;
+      border-radius: 2rem;
+      background: $primary-light-color;
+    }
+
+    &-item.primary--item {
+      background: $primary-dark-color;
+    }
+  }
+
+  &__item-icon {
+    margin: 2rem 0 0 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 6rem;
+    width: 6rem;
+    border-radius: 0.8rem;
+    background: hsla(0, 0%, 100%, 40%);
+  }
+
+  &__item-title {
+    margin: 2.4rem 0 0 2rem;
+    font-size: 1.6rem;
+    font-family: $headline-font;
+    font-weight: bold;
+    letter-spacing: 0.1rem;
+    color: $white-color;
+  }
+
+  &__item-p {
+    margin: 1rem 0 0 2rem;
+    font-size: 1.4rem;
+    font-family: $primary-font;
+    font-weight: 500;
+    letter-spacing: 0.1rem;
+    color: $white-color;
+  }
+}

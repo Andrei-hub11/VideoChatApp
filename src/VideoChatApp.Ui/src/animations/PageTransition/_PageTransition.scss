@@ -1,0 +1,17 @@
+@import "../../utils/variables/variable";
+
+.page-transition {
+  top: 0;
+  position: fixed;
+  display: flex;
+  min-height: 150vh;
+  width: 100%;
+  z-index: -2;
+
+  &__item {
+    content: "";
+    flex: 1 1 12.5%;
+    box-sizing: border-box;
+    background: $primary-color;
+  }
+}
