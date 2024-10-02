@@ -1,4 +1,8 @@
-import { RegisterForm, UserRegisterRequest } from "../../types/auth/types";
+import {
+  LoginForm,
+  RegisterForm,
+  UserRegisterRequest,
+} from "../../types/auth/types";
 import {
   NotFoundError,
   UnknownError,
@@ -71,6 +75,17 @@ export function isRegisterForm(obj: unknown): obj is RegisterForm {
     typeof obj["password"] === "string" &&
     "passwordConfirmation" in obj &&
     typeof obj["passwordConfirmation"] === "string"
+  );
+}
+
+export function isLoginForm(obj: unknown): obj is LoginForm {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "email" in obj &&
+    typeof obj.email === "string" &&
+    "password" in obj &&
+    typeof obj.password === "string"
   );
 }
 

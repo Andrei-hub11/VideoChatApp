@@ -1,49 +1,88 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
+import {
+  showAuthError,
+  showUnknowError,
+} from "../../utils/helpers/alertErrors";
+import { isUnknownError } from "../../utils/helpers/guards";
+
+import PageLoader from "../../animations/PageLoader/PageLoader";
 import useAuth from "../../hooks/useAuth/useAuth";
 import useJwtState from "../../hooks/useJwtState";
-import { useUserStore } from "../../hooks/useUserStore";
+import { useTokenRenewal } from "../../hooks/useTokenRenewal";
+import useUserStore from "../../hooks/useUserStore";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Estado de carregamento
+  const navigate = useNavigate();
+
+  const location = useLocation();
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [_, setIsExiting] = useState<boolean>(false);
 
   const { fetchUserProfile } = useAuth();
   const { setUser, user } = useUserStore();
 
   const { token } = useJwtState();
 
+  const [profileFetched, setProfileFetched] = useState(false);
+
+  useTokenRenewal();
+
   useEffect(() => {
-    if (!token) {
+    if (!token || user !== null || profileFetched) {
       setIsLoading(false);
       return;
     }
 
-    // Chama fetchUserProfile ao montar o componente
     const fetchProfile = async () => {
-      const result = await fetchUserProfile();
+      try {
+        const result = await fetchUserProfile();
 
-      setUser(result);
-      setIsLoading(false);
+        setUser(result);
+        setIsLoading(false);
+      } catch (error) {
+        if (isUnknownError(error) && error.status === 401) {
+          showAuthError(error);
+          setIsLoading(false);
+          return;
+        }
+
+        if (isUnknownError(error)) {
+          showUnknowError(error);
+          setIsLoading(false);
+          return;
+        }
+
+        setIsLoading(false);
+      } finally {
+        setProfileFetched((prev) => !prev);
+      }
     };
 
     fetchProfile();
-  }, [fetchUserProfile, setUser, token]);
+  }, [fetchUserProfile, setUser, token, user, profileFetched]);
 
-  const location = useLocation();
+  useEffect(() => {
+    if (!isLoading && !user?.id) {
+      setIsExiting(true); // Ativar animação de saída
+      const timeout = setTimeout(() => {
+        navigate("/login", { state: { from: location } });
+      }, 500); // Atrasar a navegação para coincidir com a duração da animação
+
+      return () => clearTimeout(timeout); // Limpar timeout
+    }
+  }, [isLoading, user, navigate, location]);
 
   if (isLoading) {
-    return;
+    return <PageLoader />;
   }
 
-  //Se não houver um usuário autenticado, redireciona para a página de login, incluindo a localização atual.
-  if (!user?.id) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
   return children;
 };
 

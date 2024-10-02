@@ -5,7 +5,8 @@ export interface Field {
   label: string;
   validation: yup.StringSchema<string>;
   type?: string;
-  iconSrc?: string;
+  iconSrc: string;
+  iconOptional?: string;
 }
 
 export type FormProps = {
@@ -24,3 +25,5 @@ export type ButtonProps = {
 };
 
 export type Variants = Record<string, () => React.ReactNode>;
+
+export type InputIconState = Record<string, boolean>;

@@ -18,8 +18,10 @@ function Formkit({ fields: fieldsForm, handleFormAction }: FormProps) {
     handleChange,
     handleSubmit,
     handleSubmitClick,
+    togglePasswordVisibility,
     isSubmitting,
     isLoading,
+    isPasswordVisible,
     inputRefs,
   } = useFormkitLogic({ fields: fieldsForm, handleFormAction });
 
@@ -35,25 +37,47 @@ function Formkit({ fields: fieldsForm, handleFormAction }: FormProps) {
                     ? "form__input--variant"
                     : ""
                 }`}
-                type={field.type ? field.type : "text"}
+                type={
+                  field.type === "password" && isPasswordVisible[field.name]
+                    ? "text"
+                    : field.type
+                }
                 placeholder={field.label}
                 value={values[field.name] || ""}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 ref={(e) => {
                   if (e) {
-                    inputRefs.current[index] = e; // Atribuindo a ref com função de callback
+                    inputRefs.current[index] = e;
                   }
                 }}
                 id={field.name}
               />
-              <img
-                className="form__input-icon"
-                src={field.iconSrc}
-                alt="form icon"
-                height={24}
-                width={24}
-              />
+
+              {field.type !== "password" ? (
+                <img
+                  className="form__input-icon"
+                  src={field.iconSrc}
+                  alt="form icon"
+                  height={24}
+                  width={24}
+                />
+              ) : null}
+
+              {field.type === "password" && field.iconOptional ? (
+                <img
+                  className="form__input-icon"
+                  src={
+                    isPasswordVisible[field.name]
+                      ? field.iconSrc
+                      : field.iconOptional
+                  }
+                  alt="form icon"
+                  height={24}
+                  width={24}
+                  onClick={() => togglePasswordVisibility(field.name)}
+                />
+              ) : null}
             </div>
             <small
               className={`form__msg 

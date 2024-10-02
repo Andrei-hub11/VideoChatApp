@@ -1,0 +1,25 @@
+@import "../../utils/variables/variable";
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: $primary-dark-color;
+
+  &__box {
+    width: 60px;
+    height: 60px;
+    background-color: $primary-color;
+    margin-bottom: 20px;
+  }
+
+  &__p {
+    font-size: 1.6rem;
+    font-family: $headline-font;
+    font-weight: bold;
+    color: $white-color;
+    letter-spacing: 0.1rem;
+  }
+}

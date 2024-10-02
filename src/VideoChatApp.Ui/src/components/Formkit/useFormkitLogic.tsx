@@ -2,15 +2,19 @@ import { FormikHelpers, FormikValues, useFormik } from "formik";
 import React, { useRef, useState } from "react";
 import * as yup from "yup";
 
-import { FormProps } from "../../types";
+import { FormProps, InputIconState } from "../../types";
 
 interface FormValues {
   [key: string]: string;
 }
 
 const useFormkitLogic = (form: FormProps) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { fields, handleFormAction } = form;
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState<InputIconState>(
+    {},
+  );
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>(
     Array(fields.length).fill(null),
@@ -66,6 +70,15 @@ const useFormkitLogic = (form: FormProps) => {
     await handleSubmit();
   };
 
+  const togglePasswordVisibility = (name: string) => {
+    setIsPasswordVisible((prevState) => {
+      return {
+        ...prevState,
+        [name]: !prevState[name],
+      };
+    });
+  };
+
   const {
     values,
     errors,
@@ -90,8 +103,10 @@ const useFormkitLogic = (form: FormProps) => {
     onSubmit,
     handleSubmit,
     handleSubmitClick,
+    togglePasswordVisibility,
     isSubmitting,
     isLoading,
+    isPasswordVisible,
     inputRefs,
   };
 };

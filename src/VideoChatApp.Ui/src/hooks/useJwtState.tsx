@@ -1,22 +1,28 @@
-import Cookies from "cookies-js";
+import Cookies from "js-cookie";
 
 const useJwtState = () => {
   const token = Cookies.get("accessToken") || null;
   const refreshToken = Cookies.get("refreshToken") || null;
 
-  // Função para salvar o access token
   const saveToken = (newToken: string) => {
     const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + 1);
+    expirationDate.setMinutes(expirationDate.getMinutes() + 15);
 
     Cookies.set("accessToken", newToken, {
       expires: expirationDate,
       path: "/",
+      sameSite: "lax",
+      secure: true,
+    });
+
+    Cookies.set("accessTokenExpirationDate", expirationDate.toISOString(), {
+      path: "/",
+      sameSite: "lax",
     });
   };
 
   const removeToken = () => {
-    Cookies.expire("accessToken", { path: "/" });
+    Cookies.remove("accessToken", { path: "/", sameSite: "lax", secure: true });
   };
 
   const saveRefreshToken = (newRefreshToken: string) => {
@@ -26,12 +32,37 @@ const useJwtState = () => {
     Cookies.set("refreshToken", newRefreshToken, {
       expires: expirationDate,
       path: "/",
+      sameSite: "lax",
+      secure: true,
+    });
+
+    Cookies.set("refreshTokenExpirationDate", expirationDate.toISOString(), {
+      path: "/",
+      sameSite: "lax",
     });
   };
 
-  // Função para remover o refresh token
   const removeRefreshToken = () => {
-    Cookies.expire("refreshToken", { path: "/" });
+    Cookies.remove("refreshToken", {
+      path: "/",
+      sameSite: "Lax",
+      secure: true,
+    });
+    Cookies.remove("refreshTokenExpirationDate", { path: "/" });
+  };
+
+  const getAccessTokenExpirationDate = () => {
+    const expirationDateString = Cookies.get("accessTokenExpirationDate");
+    if (!expirationDateString) return null;
+
+    return new Date(expirationDateString);
+  };
+
+  const getRefreshTokenExpirationDate = () => {
+    const expirationDateString = Cookies.get("refreshTokenExpirationDate");
+    if (!expirationDateString) return null;
+
+    return new Date(expirationDateString);
   };
 
   return {
@@ -41,6 +72,8 @@ const useJwtState = () => {
     removeToken,
     saveRefreshToken,
     removeRefreshToken,
+    getAccessTokenExpirationDate,
+    getRefreshTokenExpirationDate,
   };
 };
 

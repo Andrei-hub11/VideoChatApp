@@ -12,7 +12,7 @@ function Home() {
     <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: [0, 1] }}
-      exit={{ y: "100vh" }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
       transition={{ duration: 0.5, delay: 2.2 }}
       className="home"
     >

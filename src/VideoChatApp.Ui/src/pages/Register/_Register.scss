@@ -2,7 +2,7 @@
 
 .register {
   &__form {
-    margin-top: 4rem;
+    margin-top: 1rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -16,6 +16,34 @@
         color: $primary-color;
         cursor: pointer;
       }
+    }
+
+    &-img {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 10.6rem;
+      width: 10.6rem;
+      background: $primary-color;
+      border-radius: 50%;
+      cursor: pointer;
+
+      & img {
+        max-inline-size: 100%;
+        height: auto;
+        object-fit: cover;
+      }
+
+      & input {
+        display: none;
+      }
+    }
+  }
+
+  .form-img--variant {
+    background: unset;
+    & img {
+      border-radius: 50%;
     }
   }
 }

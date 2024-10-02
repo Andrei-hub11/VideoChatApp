@@ -88,5 +88,6 @@ export const showUnknowError = (apiError: UnknownError) => {
       title: "custom-swal-title",
       confirmButton: "custom-swal-confirm",
     },
+    scrollbarPadding: false,
   });
 };

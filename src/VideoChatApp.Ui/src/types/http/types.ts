@@ -1,4 +1,3 @@
-// src/types/NotFoundError.ts
 export interface NotFoundError {
   type: string;
   title: string;

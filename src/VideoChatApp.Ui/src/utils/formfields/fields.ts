@@ -1,6 +1,7 @@
 import * as yup from "yup";
 
 import emailIcon from "../../assets/icons/basil_gmail-outline.svg";
+import passwordOffIcon from "../../assets/icons/mdi_eye-off-outline.svg";
 import passwordIcon from "../../assets/icons/mdi_eye-outline.svg";
 import personIcon from "../../assets/icons/mdi_user-outline.svg";
 
@@ -34,6 +35,7 @@ export const registerForm: Field[] = [
       .required("A senha é obrigatória"),
     type: "password",
     iconSrc: passwordIcon,
+    iconOptional: passwordOffIcon,
   },
   {
     name: "passwordConfirmation",
@@ -44,6 +46,7 @@ export const registerForm: Field[] = [
       .required("A confirmação de senha é obrigatória"),
     type: "password",
     iconSrc: passwordIcon,
+    iconOptional: passwordOffIcon,
   },
 ];
 
@@ -56,7 +59,7 @@ export const loginForm: Field[] = [
   },
   {
     name: "password",
-    label: "Diga-me uma senha",
+    label: "Senha",
     validation: yup
       .string()
       .min(8, "A senha deve ter no mínimo 8 caracteres")
@@ -69,5 +72,6 @@ export const loginForm: Field[] = [
       .required("A senha é obrigatória"),
     type: "password",
     iconSrc: passwordIcon,
+    iconOptional: passwordOffIcon,
   },
 ];

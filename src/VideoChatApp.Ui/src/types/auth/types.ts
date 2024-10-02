@@ -5,11 +5,21 @@ export type RegisterForm = {
   passwordConfirmation: string;
 };
 
+export type LoginForm = {
+  email: string;
+  password: string;
+};
+
 export type UserRegisterRequest = {
   userName: string;
   email: string;
   password: string;
-  profileImage: string | null;
+  profileImage: string;
+};
+
+export type UserLoginRequest = {
+  email: string;
+  password: string;
 };
 
 export interface UserResponse {
@@ -19,9 +29,17 @@ export interface UserResponse {
   profileImagePath: string;
 }
 
-export interface UserRegisterResponse {
+export interface AuthResponse {
   user: UserResponse;
   accessToken: string;
   refreshToken: string;
   roles: string[];
+}
+
+export type RenewTokenRequest = {
+  refreshToken: string;
+};
+
+export interface RenewTokenResponse {
+  accessToken: string;
 }
