@@ -52,7 +52,7 @@ public sealed class UserErrorFactory
     /// <returns>An <see cref="Error"/> instance representing a conflict error.</returns>
     public static Error EmailAlreadyExists(string email)
     {
-        return Error.Conflict($"The email '{email}' is already registered.", "ERR_EMAIL_CONFLICT");
+        return Error.Conflict($"The email '{email}' is already registered.", "ERR_DUPLICATE_EMAIL");
     }
 
     /// <summary>

@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 
+using VideoChatApp.Application.Contracts.Logging;
+
 namespace VideoChatApp.Infrastructure.Logging;
 
-public class LoggerHelper<T>
+public class LoggerHelper<T> : ILoggerHelper<T>
 {
     private readonly ILogger<T> _logger;
 
@@ -32,6 +34,14 @@ public class LoggerHelper<T>
         if (_logger.IsEnabled(LogLevel.Error))
         {
             _logger.LogError(message);
+        }
+    }
+
+    public void LogError(Exception exception, string message)
+    {
+        if (_logger.IsEnabled(LogLevel.Error))
+        {
+            _logger.LogError(exception, message);
         }
     }
 }

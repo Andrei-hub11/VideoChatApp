@@ -89,8 +89,8 @@ public static class ErrorExtensions
 
         var validationProblemDetails = new ValidationErrorDetails(
         Title: "One or more validation errors occurred.",
-        Type: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
-        Status: 400,
+        Type: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422",
+        Status: 422,
         Detail: "See the 'Errors' property for details.",
         Instance: Guid.NewGuid().ToString(),
         Errors: validationErrors

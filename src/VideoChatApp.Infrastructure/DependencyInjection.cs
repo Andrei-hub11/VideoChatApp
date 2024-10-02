@@ -15,6 +15,7 @@ using VideoChatApp.Infrastructure.UtillityFactories;
 using VideoChatApp.Application.Contracts.Data;
 using VideoChatApp.Application.Contracts.Repositories;
 using VideoChatApp.Application.Contracts.UtillityFactories;
+using VideoChatApp.Application.Contracts.Logging;
 
 namespace VideoChatApp.Infrastructure;
 
@@ -51,7 +52,7 @@ public static class ServiceCollectionExtensions
             .Filter.ByExcluding(Matching.FromSource("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware"))
             .CreateLogger();
 
-        services.AddSingleton(typeof(LoggerHelper<>));
+        services.AddSingleton(typeof(ILoggerHelper<>), typeof(LoggerHelper<>));
 
         services.AddLogging(loggingBuilder =>
         {

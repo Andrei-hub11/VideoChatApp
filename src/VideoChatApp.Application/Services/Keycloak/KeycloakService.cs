@@ -17,6 +17,7 @@ using VideoChatApp.Application.Common.Result;
 using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Common.Utils.Errors;
 using VideoChatApp.Domain.Entities;
+using VideoChatApp.Application.Contracts.Logging;
 
 namespace VideoChatApp.Application.Services.Keycloak;
 
@@ -24,19 +25,21 @@ public class KeycloakService : IKeycloakService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly ILoggerHelper<KeycloakService> _logger;
     private readonly IErrorMapper _errorMapper;
     private readonly IKeycloakServiceErrorHandler _keycloakServiceErrorHandler;
     private readonly TimeSpan _tokenExpiryBuffer = TimeSpan.FromMinutes(1);
     private KeycloakToken _cachedToken = default!;
     private DateTimeOffset _tokenExpiration = DateTimeOffset.MinValue;
 
-    public KeycloakService(HttpClient httpClient, IConfiguration configuration, IErrorMapper errorMapper,
-        IKeycloakServiceErrorHandler keycloakServiceErrorHandler)
+    public KeycloakService(HttpClient httpClient, IConfiguration configuration, ILoggerHelper<KeycloakService> logger,
+        IErrorMapper errorMapper, IKeycloakServiceErrorHandler keycloakServiceErrorHandler)
     {
         _httpClient = httpClient;
         _configuration = configuration;
         _errorMapper = errorMapper;
         _keycloakServiceErrorHandler = keycloakServiceErrorHandler;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<UserResponseDTO>> GetAllUsersAsync()
@@ -152,7 +155,7 @@ public class KeycloakService : IKeycloakService
                 }
                 catch (Exception deleteEx)
                 {
-                    throw new BadRequestException("Failed to delete user after a registration failure.", deleteEx);
+                    _logger.LogError(deleteEx, $"Failed to delete user with ID: {newUser.Value.Id} after a registration failure.");
                 }
             }
         }
@@ -504,12 +507,12 @@ public class KeycloakService : IKeycloakService
         var jsonResponse = await response.Content.ReadAsStringAsync();
         var clientMappingsResponse = JsonConvert.DeserializeObject<ResourceMappingsResponseDTO>(jsonResponse);
 
-        if (clientMappingsResponse?.ClientMappings == null || !clientMappingsResponse.ClientMappings.ContainsKey("chat-app-client"))
+        if (clientMappingsResponse?.ClientMappings == null || !clientMappingsResponse.ClientMappings.TryGetValue("chat-app-client", out ResourceMappingDTO? value))
         {
             throw new BadRequestException($"Client not found or mappings empty.");
         }
 
-        var mappings = clientMappingsResponse.ClientMappings["chat-app-client"].Mappings;
+        var mappings = value.Mappings;
 
         return mappings;
     }

@@ -94,12 +94,12 @@ If the registration fails, the response will include errors details like this:
 }
 ```
 
-- **Error Response (409 Not Found):**
+- **Error Response (409 Conflict):**
 
 ```
 {
     "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409",
-    "Title": "ERR_EMAIL_CONFLICT",
+    "Title": "ERR_DUPLICATE_EMAIL",
     "Status": 409,
     "Detail": "The email 'app_user545311@test.com' is already registered.",
     "Instance": "4af774bf-ae3a-443e-b9e5-12e742eeabf9"

@@ -37,7 +37,7 @@ public class AccountService : IAccountService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(accessToken)) 
+            if (string.IsNullOrWhiteSpace(accessToken))
             {
                 return Result.Fail(Error.Unauthorized("Access token is missing.", "ERR_UNAUTHORIZED_ACCESS"));
             }
@@ -208,27 +208,17 @@ public class AccountService : IAccountService
             var newImageBytes = Base64Helper.ConvertFromBase64String(request.ProfileImage);
             bool imagesAreDifferent = !newImageBytes.SequenceEqual(user.Value.ProfileImage);
 
-            if (imagesAreDifferent)
+            var imageUpdateResult = await TryUpdateProfileImageAsync(user.Value, request.ProfileImage, imagesAreDifferent);
+            if (imageUpdateResult.IsFailure)
             {
-                var newProfileImage = await _imagesService.GetProfileImageAsync(request.ProfileImage);
-                var result = user.Value.UpdateProfile(request.UserName, newProfileImage.ProfileImageBytes,
-                      newProfileImage.ProfileImagePath);
-
-                if (result.IsFailure)
-                {
-                    return Result.Fail(result.Errors);
-                }
+                return Result.Fail(imageUpdateResult.Errors);
             }
 
-            if (!imagesAreDifferent)
-            {
-                var result = user.Value.UpdateProfile(request.UserName, userExisting.ProfileImage,
-                    userExisting.ProfileImagePath);
+            var nameUpdated = user.Value.UpdateProfile(newUsername: request.UserName);
 
-                if (result.IsFailure)
-                {
-                    return Result.Fail(result.Errors);
-                }
+            if (nameUpdated.IsFailure)
+            {
+                return Result.Fail(nameUpdated.Errors);
             }
 
             await _keycloakService.UpdateUserAsync(user.Value, cancellationToken);
@@ -239,7 +229,7 @@ public class AccountService : IAccountService
 
             isRollback = false;
 
-            if (imagesAreDifferent)
+            if (imagesAreDifferent && !string.IsNullOrWhiteSpace(userExisting.ProfileImagePath))
             {
                 await _imagesService.DeleteProfileImageAsync(userExisting.ProfileImagePath);
             }
@@ -257,5 +247,17 @@ public class AccountService : IAccountService
 
             throw;
         }
+    }
+
+    private async Task<Result<bool>> TryUpdateProfileImageAsync(User user, string profileImageBase64, bool imagesAreDifferent)
+    {
+        if (!imagesAreDifferent)
+        {
+            return Result.Ok(true);
+        }
+
+        var newProfileImage = await _imagesService.GetProfileImageAsync(profileImageBase64);
+        return user.UpdateProfile(newProfileImage: newProfileImage.ProfileImageBytes, 
+            newProfileImagePath: newProfileImage.ProfileImagePath);
     }
 }

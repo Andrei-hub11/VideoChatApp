@@ -1,9 +1,8 @@
-﻿using System.Security.Claims;
-
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using VideoChatApp.Api.Extensions;
+using VideoChatApp.Api.Middleware;
 using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Contracts.Request;
 
@@ -11,6 +10,7 @@ namespace VideoChatApp.Controllers;
 
 [Route("api/v1/account")]
 [ApiController]
+[ServiceFilter(typeof(ResultFilter))]
 public class AccountController : ControllerBase
 {
     private readonly IAccountService _accountService;

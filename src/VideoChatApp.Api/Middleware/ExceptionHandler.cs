@@ -4,15 +4,15 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 using VideoChatApp.Api.Utils;
+using VideoChatApp.Application.Contracts.Logging;
 using VideoChatApp.Domain.Exceptions;
-using VideoChatApp.Infrastructure.Logging;
 
 namespace VideoChatApp.Api.Middleware;
 
 public class ExceptionHandler : IExceptionHandler
 {
-    private readonly LoggerHelper<ExceptionHandler> _logger;
-    public ExceptionHandler(LoggerHelper<ExceptionHandler> logger)
+    private readonly ILoggerHelper<ExceptionHandler> _logger;
+    public ExceptionHandler(ILoggerHelper<ExceptionHandler> logger)
     {
         _logger = logger;
     }
@@ -37,30 +37,29 @@ public class ExceptionHandler : IExceptionHandler
                 context, 
                 badRequestException, 
                 HttpStatusCode.BadRequest,
-                "Something went wrong with your request. Sorry."
+                "Something went wrong with your request. Sorry.",
+                exception.GetType().Name,
+                exception.Message
                 ),
-            ArgumentNullException argumentNullException => CreateProblemDetails(
-                context,
-                argumentNullException,
-                HttpStatusCode.NotFound,
-                "An argument null exception occurred"
-            ),
             _ => CreateProblemDetails(
                 context,
                 exception,
                 HttpStatusCode.InternalServerError,
-                "An unexpected error occurred"
+                "ServerError",
+                "An unexpected server error occurred. Please try again later.",
+                "An error occurred."
             )
         };
 
-    private ProblemDetails CreateProblemDetails(HttpContext context, Exception exception, HttpStatusCode statusCode, string title)
+    private ProblemDetails CreateProblemDetails(HttpContext context, Exception exception, HttpStatusCode statusCode,
+        string type, string title, string detail)
     {
         var problemDetails = new ProblemDetails
         {
             Status = (int)statusCode,
-            Type = exception.GetType().Name,
+            Type = type,
             Title = title,
-            Detail = exception.Message,
+            Detail = detail,
             Instance = $"{context.Request.Method} {context.Request.Path}"
         };
 
