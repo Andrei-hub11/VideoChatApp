@@ -39,7 +39,7 @@ export const showValidationErrors = (apiError: ValidationError) => {
 
 export const showUserNotFoundError = (apiError: NotFoundError) => {
   Swal.fire({
-    title: apiError.title, // Título do erro
+    title: apiError.title,
     html: `
         <div class="custom-div">
           <p>${apiError.detail}</p>

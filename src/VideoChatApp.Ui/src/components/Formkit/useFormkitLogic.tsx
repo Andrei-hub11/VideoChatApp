@@ -2,14 +2,14 @@ import { FormikHelpers, FormikValues, useFormik } from "formik";
 import React, { useRef, useState } from "react";
 import * as yup from "yup";
 
-import { FormProps, InputIconState } from "../../types";
+import { Field, FormProps, InputIconState } from "../../types";
 
 interface FormValues {
   [key: string]: string;
 }
 
 const useFormkitLogic = (form: FormProps) => {
-  const { fields, handleFormAction } = form;
+  const { fields, handleFormAction, forgotPasswordAction } = form;
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState<InputIconState>(
@@ -79,6 +79,52 @@ const useFormkitLogic = (form: FormProps) => {
     });
   };
 
+  const renderForgotPasswordMessage = (field: Field) => {
+    if (field.type !== "password") {
+      return null;
+    }
+
+    if (forgotPasswordAction) {
+      return (
+        <div className="form__info">
+          <small
+            className={`form__msg ${
+              errors[field.name] && touched[field.name]
+                ? "form__msg--variant"
+                : ""
+            }`}
+          >
+            {errors[field.name] && touched[field.name] ? (
+              <>{errors[field.name]}</>
+            ) : (
+              <>'error'</>
+            )}
+          </small>
+          <p
+            className="form__msg form__msg--forgot"
+            onClick={forgotPasswordAction}
+          >
+            Forgot password
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <small
+        className={`form__msg ${
+          errors[field.name] && touched[field.name] ? "form__msg--variant" : ""
+        }`}
+      >
+        {errors[field.name] && touched[field.name] ? (
+          <>{errors[field.name]}</>
+        ) : (
+          <>'error'</>
+        )}
+      </small>
+    );
+  };
+
   const {
     values,
     errors,
@@ -108,6 +154,7 @@ const useFormkitLogic = (form: FormProps) => {
     isLoading,
     isPasswordVisible,
     inputRefs,
+    renderForgotPasswordMessage,
   };
 };
 

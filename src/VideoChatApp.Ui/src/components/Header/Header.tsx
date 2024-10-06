@@ -1,13 +1,13 @@
+import { motion } from "framer-motion";
+
 import "./_Header.scss";
+
+import useHeaderLogic from "./useHeaderLogic";
 
 import obi from "../../assets/images/Obi-Wan Kenobi, Jedi, Star Wars.jpg";
 
-import useJwtState from "../../hooks/useJwtState";
-import useUserStore from "../../hooks/useUserStore";
-
 function Header() {
-  const { removeToken } = useJwtState();
-  const { user, removeUser } = useUserStore();
+  const { user, toggleMenu, isMenuOpen } = useHeaderLogic();
 
   return (
     <header className="header">
@@ -22,12 +22,22 @@ function Header() {
             }
             alt="imagem de perfil"
             onClick={() => {
-              removeToken();
-              removeUser();
+              toggleMenu();
             }}
           />
         </div>
       </nav>
+      <motion.div
+        className="header__menu"
+        initial={{ y: "-200%", opacity: 0 }}
+        animate={{
+          y: isMenuOpen ? "0%" : "-200%",
+          opacity: isMenuOpen ? [0, 0, 0, 0, 1] : [0.7, 0.6, 0.4, 0, 0],
+        }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      >
+        a
+      </motion.div>
     </header>
   );
 }

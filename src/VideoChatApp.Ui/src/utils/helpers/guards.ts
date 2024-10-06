@@ -1,8 +1,10 @@
 import {
+  ForgotPasswordRequest,
   LoginForm,
   RegisterForm,
+  UpdatePasswordRequest,
   UserRegisterRequest,
-} from "../../types/auth/types";
+} from "../../types/account/types";
 import {
   NotFoundError,
   UnknownError,
@@ -101,5 +103,27 @@ export function isUserRegisterRequest(
     typeof obj.email === "string" &&
     "password" in obj &&
     typeof obj.password === "string"
+  );
+}
+
+export function isResetPasswordRequestForm(
+  obj: unknown,
+): obj is ForgotPasswordRequest {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "email" in obj &&
+    typeof obj.email === "string"
+  );
+}
+
+export function isUpdatePasswordRequestForm(
+  obj: unknown,
+): obj is UpdatePasswordRequest {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "newPassword" in obj &&
+    typeof obj.newPassword === "string"
   );
 }

@@ -5,12 +5,14 @@ import { handleApiErrors } from "../../utils/helpers/handleApiErrors";
 
 import {
   AuthResponse,
+  ForgotPasswordRequest,
   RenewTokenRequest,
   RenewTokenResponse,
+  UpdatePasswordRequest,
   UserLoginRequest,
   UserRegisterRequest,
   UserResponse,
-} from "../../types/auth/types";
+} from "../../types/account/types";
 import api from "../base/api";
 
 export const getMe = async (): Promise<UserResponse> => {
@@ -62,6 +64,23 @@ export const login = async (
   }
 };
 
+export const resetPassword = async (
+  request: ForgotPasswordRequest,
+): Promise<boolean> => {
+  try {
+    const { data } = await api.post<boolean>(
+      "/account/forgot-password",
+      request,
+    );
+    return data;
+  } catch (error: unknown) {
+    if (isAxiosError(error)) {
+      throw await handleApiErrors(error);
+    }
+    throw error;
+  }
+};
+
 export const refreshToken = async (
   request: RenewTokenRequest,
 ): Promise<RenewTokenResponse> => {
@@ -76,6 +95,23 @@ export const refreshToken = async (
       throw await handleApiErrors(error);
     }
 
+    throw error;
+  }
+};
+
+export const updatePassword = async (
+  request: UpdatePasswordRequest,
+): Promise<boolean> => {
+  try {
+    const { data } = await api.put<boolean>(
+      "/account/update-password",
+      request,
+    );
+    return data;
+  } catch (error: unknown) {
+    if (isAxiosError(error)) {
+      throw await handleApiErrors(error);
+    }
     throw error;
   }
 };

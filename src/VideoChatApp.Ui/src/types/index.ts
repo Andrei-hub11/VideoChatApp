@@ -12,6 +12,7 @@ export interface Field {
 export type FormProps = {
   fields: Field[];
   handleFormAction: (values: unknown) => Promise<boolean>;
+  forgotPasswordAction?: () => void;
 };
 
 type ExpectedKeys = "primary" | "secondary" | "formAction";

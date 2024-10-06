@@ -1,9 +1,11 @@
 @import "../../utils/variables/variable";
 
 .header {
+  position: relative;
   width: 100%;
   padding: 1.8rem 11.4rem;
   border-bottom: 0.5px solid hsla(213, 100%, 82%, 10%);
+  background: $bg-color;
 
   &__nav {
     display: flex;
@@ -15,6 +17,17 @@
       font-family: $headline-font;
       color: $white-color;
     }
+  }
+
+  &__menu {
+    position: absolute;
+    top: 10.8rem;
+    right: 6.3rem;
+    width: 16rem;
+    height: 19rem;
+    background: $primary-color;
+    border-radius: 0.8rem;
+    z-index: -10;
   }
 
   &__profile {

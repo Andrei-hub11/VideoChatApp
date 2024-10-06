@@ -13,7 +13,7 @@ import {
   LoginForm,
   RegisterForm,
   UserRegisterRequest,
-} from "../../types/auth/types";
+} from "../../types/account/types";
 import {
   NotFoundError,
   UnknownError,

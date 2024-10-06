@@ -67,9 +67,14 @@ const useLoginLogic = () => {
     navigate("/register");
   };
 
+  const handleForgotPassword = () => {
+    navigate("/forgot-password");
+  };
+
   return {
     login,
     handleRedirect,
+    handleForgotPassword,
   };
 };
 

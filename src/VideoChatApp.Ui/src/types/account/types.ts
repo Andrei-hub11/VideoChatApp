@@ -43,3 +43,13 @@ export type RenewTokenRequest = {
 export interface RenewTokenResponse {
   accessToken: string;
 }
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export interface UpdatePasswordRequest {
+  newPassword: string;
+  userId: string;
+  token: string;
+}

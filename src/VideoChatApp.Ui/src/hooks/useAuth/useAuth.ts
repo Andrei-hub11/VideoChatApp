@@ -5,15 +5,19 @@ import {
   login,
   refreshToken,
   register,
+  resetPassword,
+  updatePassword,
 } from "../../services/account/account";
 import {
   AuthResponse,
+  ForgotPasswordRequest,
   RenewTokenRequest,
   RenewTokenResponse,
+  UpdatePasswordRequest,
   UserLoginRequest,
   UserRegisterRequest,
   UserResponse,
-} from "../../types/auth/types";
+} from "../../types/account/types";
 import { ErrorTypes } from "../../types/http/types";
 
 const useAuth = () => {
@@ -62,6 +66,18 @@ const useAuth = () => {
     refreshToken,
   );
 
+  const {
+    mutateAsync: resetPasswordMutation,
+    isSuccess: isResetPasswordSuccess,
+    isLoading: isResetPasswordLoading,
+  } = useMutation<boolean, ErrorTypes, ForgotPasswordRequest>(resetPassword);
+
+  const {
+    mutateAsync: updatePasswordMutation,
+    isSuccess: isUpdatePasswordSuccess,
+    isLoading: isUpdatePasswordLoading,
+  } = useMutation<boolean, ErrorTypes, UpdatePasswordRequest>(updatePassword);
+
   const fetchUserProfile = async (): Promise<UserResponse> => {
     const { data, error } = await refetchUser();
 
@@ -88,14 +104,37 @@ const useAuth = () => {
     return await loginMutation(request);
   };
 
+  const resetPasswordRequest = async (request: ForgotPasswordRequest) => {
+    const response = await resetPasswordMutation(request);
+    return response;
+  };
+
   const renewAccessToken = async (request: RenewTokenRequest) => {
     const response = await renewTokenMutation(request);
 
     return response;
   };
 
-  const isLoading = isRegisterLoading;
-  const isSuccess = isRegisterSuccess || isLoginSuccess || isRenewTokenSuccess;
+  const updateUserPassword = async (
+    request: UpdatePasswordRequest,
+  ): Promise<boolean> => {
+    const response = await updatePasswordMutation(request);
+    return response;
+  };
+
+  const isLoading =
+    isRegisterLoading ||
+    isLoginLoading ||
+    isRenewTokenLoading ||
+    isResetPasswordLoading ||
+    isUpdatePasswordLoading;
+
+  const isSuccess =
+    isRegisterSuccess ||
+    isLoginSuccess ||
+    isRenewTokenSuccess ||
+    isResetPasswordSuccess ||
+    isUpdatePasswordSuccess;
 
   return {
     isLoading,
@@ -103,7 +142,9 @@ const useAuth = () => {
     fetchUserProfile,
     registerUser,
     userLogin,
+    resetPasswordRequest,
     renewAccessToken,
+    updateUserPassword,
   };
 };
 

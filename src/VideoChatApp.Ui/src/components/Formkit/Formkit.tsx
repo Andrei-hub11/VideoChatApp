@@ -8,7 +8,11 @@ import Loader from "../../animations/Loader/Loader";
 import { FormProps } from "../../types";
 import Button from "../Button/Button";
 
-function Formkit({ fields: fieldsForm, handleFormAction }: FormProps) {
+function Formkit({
+  fields: fieldsForm,
+  handleFormAction,
+  forgotPasswordAction,
+}: FormProps) {
   const {
     fields,
     values,
@@ -23,7 +27,12 @@ function Formkit({ fields: fieldsForm, handleFormAction }: FormProps) {
     isLoading,
     isPasswordVisible,
     inputRefs,
-  } = useFormkitLogic({ fields: fieldsForm, handleFormAction });
+    renderForgotPasswordMessage,
+  } = useFormkitLogic({
+    fields: fieldsForm,
+    handleFormAction,
+    forgotPasswordAction,
+  });
 
   return (
     <motion.form action="" className="form" onSubmit={handleSubmit}>
@@ -79,16 +88,21 @@ function Formkit({ fields: fieldsForm, handleFormAction }: FormProps) {
                 />
               ) : null}
             </div>
-            <small
-              className={`form__msg 
+            {renderForgotPasswordMessage(field)}
+            {field.type !== "password" ? (
+              <div>
+                <small
+                  className={`form__msg 
                 ${errors[field.name] && touched[field.name] ? "form__msg--variant" : ""}`}
-            >
-              {errors[field.name] && touched[field.name] ? (
-                <>{errors[field.name]}</>
-              ) : (
-                <>'error'</>
-              )}
-            </small>
+                >
+                  {errors[field.name] && touched[field.name] ? (
+                    <>{errors[field.name]}</>
+                  ) : (
+                    <>'error'</>
+                  )}
+                </small>
+              </div>
+            ) : null}
           </div>
         );
       })}

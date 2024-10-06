@@ -10,7 +10,7 @@ import AuthHeader from "../../components/AuthHeader/AuthHeader";
 import Formkit from "../../components/Formkit/Formkit";
 
 function Login() {
-  const { login, handleRedirect } = useLoginLogic();
+  const { login, handleRedirect, handleForgotPassword } = useLoginLogic();
 
   return (
     <motion.section
@@ -29,7 +29,13 @@ function Login() {
         description="Bem-vindo de volta! Faça login para criar ou entrar em uma sala de videochamada e começar a conversar!"
       />
       <div className="login__form">
-        <Formkit {...{ fields: loginForm, handleFormAction: login }} />
+        <Formkit
+          {...{
+            fields: loginForm,
+            handleFormAction: login,
+            forgotPasswordAction: handleForgotPassword,
+          }}
+        />
         <p className="login__form-navigation">
           Ainda não tem uma conta?{" "}
           <span onClick={handleRedirect}>Registrar-se</span>

@@ -20,6 +20,11 @@
     }
   }
 
+  &__info {
+    display: flex;
+    justify-content: space-between;
+  }
+
   input {
     transition:
       background-color 0.3s,
@@ -91,6 +96,14 @@
 
   &__msg--variant {
     visibility: visible;
+  }
+
+  &__msg--forgot {
+    visibility: visible;
+    font-size: 1.4rem;
+    color: $white-color;
+    cursor: pointer;
+    font-weight: bold;
   }
 
   &__action {
