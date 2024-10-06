@@ -1,4 +1,4 @@
-﻿namespace VideoChatApp.Common;
+﻿namespace VideoChatApp.Common.Helpers;
 
 public static class Base64Helper
 {

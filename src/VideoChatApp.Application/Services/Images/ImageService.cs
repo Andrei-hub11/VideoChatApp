@@ -1,5 +1,5 @@
 ﻿using VideoChatApp.Application.Contracts.Services;
-using VideoChatApp.Common;
+using VideoChatApp.Common.Helpers;
 using VideoChatApp.Contracts.Models;
 
 namespace VideoChatApp.Application.Services.Images;

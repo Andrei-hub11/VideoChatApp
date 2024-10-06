@@ -12,35 +12,31 @@ public sealed class User
     public string Id { get; private set; } = string.Empty;
     public string UserName { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
-    public string PasswordHash { get; private set; } = string.Empty;
     public string ProfileImagePath { get; private set; } = string.Empty;
     public byte[] ProfileImage { get; private set; } = [];
     public IReadOnlySet<string> Roles { get; private set; } = new HashSet<string>();
 
-    private User(string id, string name, string email, string passwordHash, byte[] profileImage, string profileImagePath, IReadOnlySet<string> roles)
+    private User(string id, string name, string email, byte[] profileImage, string profileImagePath, IReadOnlySet<string> roles)
     {
         Id = id;
         UserName = name;
         Email = email;
-        PasswordHash = passwordHash;
         ProfileImage = profileImage;
         ProfileImagePath = profileImagePath;
         Roles = roles;
     }
 
-    public static Result<User> Create(string id, string name, string email, string password, byte[] profileImage,
+    public static Result<User> Create(string id, string name, string email, byte[] profileImage,
         string profileImagePath, IReadOnlySet<string> roles)
     {
-        var errors = ValidateUser(id, name, email, roles, password, profileImage, profileImagePath);
+        var errors = ValidateUser(id, name, email, roles, profileImage, profileImagePath);
 
         if (errors.Count != 0)
         {
             return Result.Fail(errors);
         }
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
-
-        return new User(id, name, email, passwordHash, profileImage, profileImagePath, roles);
+        return new User(id, name, email, profileImage, profileImagePath, roles);
     }
 
     public static Result<User> From(ApplicationUserMapping applicationUser)
@@ -54,13 +50,12 @@ public sealed class User
         }
 
         return new User(applicationUser.Id, applicationUser.UserName, applicationUser.Email,
-            applicationUser.PasswordHash, applicationUser.ProfileImage, applicationUser.ProfileImagePath,
+            applicationUser.ProfileImage, applicationUser.ProfileImagePath,
             applicationUser.Roles);
     }
 
     private static ReadOnlyCollection<ValidationError> ValidateUser(string id, string name, string email,
-        IReadOnlySet<string> roles, string? password = null, byte[]? profileImage = null,
-        string? profileImagePath = null)
+        IReadOnlySet<string> roles, byte[]? profileImage = null, string? profileImagePath = null)
     {
         var errors = new List<ValidationError>();
         var isValidRole = new HashSet<string> { "Admin", "User", "Manager" };
@@ -79,11 +74,6 @@ public sealed class User
 
         errors.AddRange(ValidateEmail(email));
 
-        if (password is not null)
-        {
-            errors.AddRange(ValidatePassword(password));
-        }
-
         errors.AddRange(ValidateRoles(roles));
 
         if (profileImage is not null && profileImagePath is not null && profileImage.Length > 0)
@@ -94,7 +84,8 @@ public sealed class User
         return errors.AsReadOnly();
     }
 
-    private static ReadOnlyCollection<ValidationError> ValidateProfileUpdate(string? newUsername, byte[]? newProfileImage, string? newProfileImagePath)
+    private static ReadOnlyCollection<ValidationError> ValidateProfileUpdate(string? newUsername,
+        byte[]? newProfileImage, string? newProfileImagePath)
     {
         var errors = new List<ValidationError>();
 
@@ -144,25 +135,25 @@ public sealed class User
         return result.Errors;
     }
 
-    public static IReadOnlyList<ValidationError> ValidatePassword(string password)
-    {
-        var result = Guard.For().Use((guard) =>
-        {
-            guard
-            .IsNullOrWhiteSpace(password)
-            .MinLength(password, 8)
-            .MatchesPattern(
-                password,
-                @"(?:.*[!@#$%^&*]){2,}",
-                "Invalid password. The password must have at least two special characters",
-                "ERR_INVALID_PASSWORD",
-                nameof(password)
-                )
-            .DoNotThrowOnError();
-        });
+    //public static IReadOnlyList<ValidationError> ValidatePassword(string password)
+    //{
+    //    var result = Guard.For().Use((guard) =>
+    //    {
+    //        guard
+    //        .IsNullOrWhiteSpace(password)
+    //        .MinLength(password, 8)
+    //        .MatchesPattern(
+    //            password,
+    //            @"(?:.*[!@#$%^&*]){2,}",
+    //            "Invalid password. The password must have at least two special characters",
+    //            "ERR_INVALID_PASSWORD",
+    //            nameof(password)
+    //            )
+    //        .DoNotThrowOnError();
+    //    });
 
-        return result.Errors;
-    }
+    //    return result.Errors;
+    //}
 
     public static IReadOnlyList<ValidationError> ValidateImage(byte[] profileImage, string profileImagePath)
     {
@@ -196,7 +187,7 @@ public sealed class User
         return result.Errors;
     }
 
-    public Result<bool> UpdateProfile(string? newUsername = null, 
+    public Result<bool> UpdateProfile(string? newUsername = null,
         byte[]? newProfileImage = null, string? newProfileImagePath = null)
     {
         var errors = ValidateProfileUpdate(newUsername, newProfileImage, newProfileImagePath);
@@ -211,10 +202,5 @@ public sealed class User
         ProfileImagePath = newProfileImagePath ?? ProfileImagePath;
 
         return true;
-    }
-
-    public bool VerifyPassword(string password)
-    {
-        return BCrypt.Net.BCrypt.Verify(password, PasswordHash);
     }
 }

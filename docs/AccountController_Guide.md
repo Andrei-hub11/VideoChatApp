@@ -101,7 +101,7 @@ If the registration fails, the response will include errors details like this:
     "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409",
     "Title": "ERR_DUPLICATE_EMAIL",
     "Status": 409,
-    "Detail": "The email 'app_user545311@test.com' is already registered.",
+    "Detail": "An account with the provided email is already registered.",
     "Instance": "4af774bf-ae3a-443e-b9e5-12e742eeabf9"
 }
 ```

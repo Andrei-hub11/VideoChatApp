@@ -47,16 +47,24 @@ public class UserErrorFactoryTest
     }
 
     [Fact]
-    public void EmailAlreadyExists_ShouldReturnConflictError()
+    public void UsernameAlreadyExists_ShouldReturnConflictError()
     {
-        // Arrange
-        var email = "john@example.com";
-
         // Act
-        var error = UserErrorFactory.EmailAlreadyExists(email);
+        var error = UserErrorFactory.UsernameAlreadyExists();
 
         // Assert
-        Assert.Equal("ERR_EMAIL_CONFLICT", error.Code);
-        Assert.Equal($"The email '{email}' is already registered.", error.Description);
+        Assert.Equal("ERR_DUPLICATE_USERNAME", error.Code);
+        Assert.Equal("An account with the provided username is already registered.", error.Description);
+    }
+
+    [Fact]
+    public void EmailAlreadyExists_ShouldReturnConflictError()
+    {
+        // Act
+        var error = UserErrorFactory.EmailAlreadyExists();
+
+        // Assert
+        Assert.Equal("ERR_DUPLICATE_EMAIL", error.Code);
+        Assert.Equal($"An account with the provided email is already registered.", error.Description);
     }
 }

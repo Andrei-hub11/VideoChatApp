@@ -4,5 +4,5 @@ namespace VideoChatApp.Application.Contracts.UtillityFactories;
 
 public interface IKeycloakServiceErrorHandler
 {
-    Task<Result> HandleNotFoundErrorAsync(HttpResponseMessage response, string identifier, string? clientId = null);
+    Task<Result> ExtractErrorFromResponse(HttpResponseMessage response);
 }

@@ -16,5 +16,6 @@ public interface IKeycloakService
     Task<Result<AuthResponseDTO>> LoginUserAync(UserLoginRequestDTO request, CancellationToken cancellationToken);
     Task<KeycloakToken> RefreshAccessTokenAsync(string refreshToken, CancellationToken cancellationToken);
     Task UpdateUserAsync(User user, CancellationToken? cancellationToken = null);
+    Task UpdateUserPasswordAsync(string userId, string newPassword, CancellationToken cancellationToken);
     Task<bool> DeleteUserByIdAsync(string userId);
 }

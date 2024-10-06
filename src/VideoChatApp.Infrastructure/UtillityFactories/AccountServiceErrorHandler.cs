@@ -1,4 +1,5 @@
-﻿using VideoChatApp.Application.Contracts.Services;
+﻿using VideoChatApp.Application.Contracts.Logging;
+using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Contracts.DapperModels;
 using VideoChatApp.Contracts.Response;
@@ -14,10 +15,14 @@ public class AccountServiceErrorHandler : IAccountServiceErrorHandler
     private readonly IKeycloakService _keycloakService;
     private readonly IImagesService _imagesService;
 
-    public AccountServiceErrorHandler(IKeycloakService keycloakService, IImagesService imagesService)
+    private readonly ILoggerHelper<AccountServiceErrorHandler> _logger;
+
+    public AccountServiceErrorHandler(IKeycloakService keycloakService, IImagesService imagesService, 
+        ILoggerHelper<AccountServiceErrorHandler> logger)
     {
         _keycloakService = keycloakService;
         _imagesService = imagesService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -29,11 +34,19 @@ public class AccountServiceErrorHandler : IAccountServiceErrorHandler
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task HandleRegistrationFailureAsync(UserResponseDTO user, string? profileImagePath)
     {
-        await _keycloakService.DeleteUserByIdAsync(user.Id);
-
-        if (!string.IsNullOrWhiteSpace(profileImagePath))
+        try
         {
-            await _imagesService.DeleteProfileImageAsync(profileImagePath);
+            await _keycloakService.DeleteUserByIdAsync(user.Id);
+
+            if (!string.IsNullOrWhiteSpace(profileImagePath))
+            {
+                await _imagesService.DeleteProfileImageAsync(profileImagePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log any exceptions that occur during the cleanup process without interrupting the original flow
+            _logger.LogError(ex, $"An error occurred while cleaning up the user registration for user ID: {user.Id}");
         }
     }
 
@@ -54,79 +67,74 @@ public class AccountServiceErrorHandler : IAccountServiceErrorHandler
     /// <returns>A task that represents the asynchronous operation. The task does not return a value.</returns>
     public async Task HandleUnexpectedRegistrationExceptionAsync(string userEmail, string? profileImagePath)
     {
-        if (!string.IsNullOrWhiteSpace(profileImagePath))
+        try
         {
-            await _imagesService.DeleteProfileImageAsync(profileImagePath);
+            if (!string.IsNullOrWhiteSpace(profileImagePath))
+            {
+                await _imagesService.DeleteProfileImageAsync(profileImagePath);
+            }
+
+            var existingUserResult = await _keycloakService.GetUserByEmailAsync(userEmail);
+
+            if (existingUserResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to retrieve the user by email: {userEmail}");
+            }
+
+            // Delete the user from Keycloak by their ID
+            await _keycloakService.DeleteUserByIdAsync(existingUserResult.Value.Id);
         }
-
-        var existingUserResult = await _keycloakService.GetUserByEmailAsync(userEmail);
-
-        if (existingUserResult.IsFailure)
+        catch (Exception ex)
         {
-            return;
+            // Log the exception without rethrowing to avoid concealing the original issue
+            _logger.LogError(ex, $"An error occurred during the cleanup process for user registration with email: {userEmail}");
         }
-
-        await _keycloakService.DeleteUserByIdAsync(existingUserResult.Value.Id);
     }
 
-    /// <summary>
-    /// Handles the rollback process when an unexpected exception occurs during a user update operation.
-    /// This method performs the following steps:
-    /// <list type="bullet">
-    ///     <item>
-    ///         <description>Restores the original username and profile image path in the domain model if they were changed during the update operation.</description>
-    ///     </item>
-    ///     <item>
-    ///         <description>If a new profile image was uploaded, this image is deleted from the storage, and the original image path is restored in the domain model.</description>
-    ///     </item>
-    ///     <item>
-    ///         <description>Updates the user in Keycloak with the restored details if there were any changes in the profile image path or username.</description>
-    ///     </item>
-    /// </list>
-    /// </summary>
-    /// <param name="user">An instance of <see cref="ApplicationUserMapping"/> representing the user details including email, username, and profile image path.
-    /// This instance is used to restore the original profile details and handle the cleanup process.</param>
-    /// <returns>A task that represents the asynchronous operation. The task does not return a value. If an error occurs during the rollback process, it is logged or handled appropriately. 
-    /// This method does not propagate exceptions but ensures that cleanup actions are performed to maintain consistency.</returns>
     public async Task HandleUnexpectedUpdateExceptionAsync(ApplicationUserMapping user)
     {
-        var existingUserResult = await _keycloakService.GetUserByEmailAsync(user.Email);
-
-        if (existingUserResult.IsFailure)
+        try
         {
-            return;
-        }
+            var existingUserResult = await _keycloakService.GetUserByEmailAsync(user.Email);
 
-        var existingUser = existingUserResult.Value;
+            if (existingUserResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to retrieve the existing user by email: {user.Email}");
+            }
 
-        var userDomain = User.From(user);
+            var existingUser = existingUserResult.Value;
 
-        if (userDomain.IsFailure)
-        {
-            return;
-        }
+            var userDomain = User.From(user);
 
-        // Restore the original username and profile image path in the domain model
-        var updateResult = userDomain.Value.UpdateProfile(user.UserName, [1], user.ProfileImagePath);
+            if (userDomain.IsFailure)
+            {
+                throw new InvalidOperationException("Failed to create the domain user from the provided user mapping.");
+            }
 
-        if (updateResult.IsFailure)
-        {
-            // Log or handle the failure to update the domain model if necessary
-            return;
-        }
+            // Restore the original username and profile image path in the domain model
+            var updateResult = userDomain.Value.UpdateProfile(user.UserName, null, user.ProfileImagePath);
 
-        // Delete the new profile image if it exists and revert to the original path
-        if (!string.IsNullOrWhiteSpace(user.ProfileImagePath) &&
-            existingUser.ProfileImagePath != user.ProfileImagePath)
-        {
-            if (!string.IsNullOrWhiteSpace(existingUser.ProfileImagePath))
+            if (updateResult.IsFailure)
+            {
+                throw new InvalidOperationException("Failed to update the profile with the original username and profile image path.");
+            }
+
+            // Delete the new profile image if it exists
+            if (!string.IsNullOrWhiteSpace(user.ProfileImagePath)
+                && !string.IsNullOrWhiteSpace(existingUser.ProfileImagePath)
+                && existingUser.ProfileImagePath != user.ProfileImagePath)
             {
                 await _imagesService.DeleteProfileImageAsync(existingUser.ProfileImagePath);
             }
-        }
 
-        // Update Keycloak only if there are changes
-        await _keycloakService.UpdateUserAsync(userDomain.Value);
+            // Update Keycloak only if there are changes
+            await _keycloakService.UpdateUserAsync(userDomain.Value);
+        }
+        catch (Exception ex)
+        {
+            // Log the exception but do not rethrow to avoid hiding the original exception
+            _logger.LogError(ex, $"An error occurred while handling the rollback process for user: {user.Email}");
+        }
     }
 }
 

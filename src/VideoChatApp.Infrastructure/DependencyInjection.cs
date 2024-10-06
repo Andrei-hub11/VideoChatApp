@@ -16,6 +16,8 @@ using VideoChatApp.Application.Contracts.Data;
 using VideoChatApp.Application.Contracts.Repositories;
 using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Application.Contracts.Logging;
+using VideoChatApp.Infrastructure.Email;
+using VideoChatApp.Application.Contracts.Email;
 
 namespace VideoChatApp.Infrastructure;
 
@@ -26,6 +28,7 @@ public static class ServiceCollectionExtensions
         services
             .AddHttpContextAccessor()
             .AddPersistence()
+            .AddFluentEmail(configuration)
             .AddSerilog(configuration)
             .AddHttpClient()
             .AddKeycloakAuthentication(configuration)
@@ -40,6 +43,25 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DapperContext>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IEmailSender, EmailSender>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddFluentEmail(this IServiceCollection services,
+      IConfiguration configuration)
+    {
+        var emailSettings = configuration.GetSection("Smtp");
+
+        var defaultFromEmail = emailSettings["DefaultFromEmail"];
+        var host = emailSettings["Host"];
+        var port = emailSettings.GetValue<int>("Port");
+        var userName = emailSettings["UserName"];
+        var password = emailSettings["Password"];
+
+        services.AddFluentEmail(defaultFromEmail)
+            .AddRazorRenderer()
+            .AddSmtpSender(host, port, userName, password);
 
         return services;
     }
@@ -91,7 +113,6 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection AddFactories(this IServiceCollection services)
     {
-        services.AddSingleton<IErrorMapper, ErrorMapper>();
         services.AddScoped<IAccountServiceErrorHandler, AccountServiceErrorHandler>();
         services.AddScoped<IKeycloakServiceErrorHandler, KeycloakServiceErrorHandler>();
 

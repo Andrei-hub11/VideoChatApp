@@ -23,7 +23,7 @@ public class UserRepository : IUserRepository
 
     public async Task<ApplicationUserMapping?> GetUserByIdAsync(string userId, CancellationToken cancellationToken)
     {
-        const string query = @"SELECT u.Id, u.UserName, u.Email, u.PasswordHash, u.ProfileImage,
+        const string query = @"SELECT u.Id, u.UserName, u.Email, u.ProfileImage,
         u.ProfileImagePath, ur.Name as RoleName
         FROM ApplicationUsers u
         LEFT JOIN ApplicationUserRoles ur ON u.Id = ur.UserId
@@ -56,7 +56,7 @@ public class UserRepository : IUserRepository
 
     public async Task<ApplicationUserMapping?> GetUserByEmailAsync(string userEmail, CancellationToken cancellationToken)
     {
-        const string query = @"SELECT u.Id, u.UserName, u.Email, u.PasswordHash, u.ProfileImage,
+        const string query = @"SELECT u.Id, u.UserName, u.Email, u.ProfileImage,
         u.ProfileImagePath, ur.Name as RoleName
         FROM ApplicationUsers u
         LEFT JOIN ApplicationUserRoles ur ON u.Id = ur.UserId
@@ -92,8 +92,8 @@ public class UserRepository : IUserRepository
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        const string query = @"INSERT INTO ApplicationUsers (Id, UserName, Email, PasswordHash, ProfileImage,
-        ProfileImagePath) VALUES (@Id, @UserName, @Email, @PasswordHash, @ProfileImage,
+        const string query = @"INSERT INTO ApplicationUsers (Id, UserName, Email, ProfileImage,
+        ProfileImagePath) VALUES (@Id, @UserName, @Email, @ProfileImage,
         @ProfileImagePath)";
 
         int result = await Connection.ExecuteAsync(query, new
@@ -101,7 +101,6 @@ public class UserRepository : IUserRepository
             user.Id,
             user.UserName,
             user.Email,
-            user.PasswordHash,
             user.ProfileImage,
             user.ProfileImagePath
         }, transaction: Transaction);
@@ -130,7 +129,7 @@ public class UserRepository : IUserRepository
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        const string query = @"UPDATE ApplicationUsers SET UserName = @UserName,
+        const string query = @"UPDATE ApplicationUsers SET UserName = @UserName, 
         ProfileImage = @ProfileImage, ProfileImagePath = @ProfileImagePath
         WHERE Id = @Id";
 
@@ -143,11 +142,5 @@ public class UserRepository : IUserRepository
         }, transaction: Transaction);
 
         return result > 0;
-    }
-
-
-    public Task<User> GetUserById(string id)
-    {
-        throw new NotImplementedException();
     }
 }

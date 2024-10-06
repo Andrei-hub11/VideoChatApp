@@ -1,13 +1,13 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace VideoChatApp.Contracts.Utils;
+namespace VideoChatApp.Common.Helpers;
 
 public class ThrowHelper
 {
     public static void ThrowIfNull<T>([NotNull] T? value, string message = "",
-        [CallerArgumentExpression("value")] string valueExpression = "Not provided")
+        [CallerArgumentExpression(nameof(value))] string valueExpression = "Not provided")
     {
         _ = value ?? throw new ArgumentNullException(message ?? $"{valueExpression} cannot be null");
     }
- }
+}

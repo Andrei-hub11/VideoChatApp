@@ -1,10 +1,14 @@
-﻿using VideoChatApp.Application.Common.Result;
+﻿using Microsoft.Extensions.Configuration;
+
+using VideoChatApp.Application.Common.Result;
 using VideoChatApp.Application.Contracts.Data;
+using VideoChatApp.Application.Contracts.Email;
 using VideoChatApp.Application.Contracts.Repositories;
 using VideoChatApp.Application.Contracts.Services;
+using VideoChatApp.Application.Contracts.TokenJWT;
 using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Application.DTOMappers;
-using VideoChatApp.Common;
+using VideoChatApp.Common.Helpers;
 using VideoChatApp.Common.Utils.Errors;
 using VideoChatApp.Common.Utils.ResultError;
 using VideoChatApp.Contracts.DapperModels;
@@ -20,16 +24,23 @@ public class AccountService : IAccountService
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IKeycloakService _keycloakService;
+    private readonly ITokenService _tokenService;
     private readonly IImagesService _imagesService;
+    private readonly IEmailSender _emailSender;
+    private readonly IConfiguration _configuration;
     private readonly IAccountServiceErrorHandler _accountServiceErrorHandler;
 
-    public AccountService(IUnitOfWork unitOfWork, IKeycloakService keycloakService, IImagesService imagesService,
+    public AccountService(IUnitOfWork unitOfWork, IKeycloakService keycloakService, ITokenService tokenService,
+        IImagesService imagesService, IEmailSender emailSender, IConfiguration configuration,
         IAccountServiceErrorHandler accountServiceErrorHandler)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _userRepository = unitOfWork.GetRepository<IUserRepository>();
         _keycloakService = keycloakService;
+        _tokenService = tokenService;
         _imagesService = imagesService;
+        _emailSender = emailSender;
+        _configuration = configuration;
         _accountServiceErrorHandler = accountServiceErrorHandler;
     }
 
@@ -66,7 +77,7 @@ public class AccountService : IAccountService
 
             if (userExisting != null)
             {
-                return Result.Fail(UserErrorFactory.EmailAlreadyExists(request.Email));
+                return Result.Fail(UserErrorFactory.EmailAlreadyExists());
             }
 
             profileImage = await _imagesService.GetProfileImageAsync(request.ProfileImage);
@@ -75,7 +86,6 @@ public class AccountService : IAccountService
                 id: Guid.NewGuid().ToString(),
                 name: request.UserName,
                 email: request.Email,
-                password: request.Password,
                 profileImage: profileImage.ProfileImageBytes,
                 profileImagePath: profileImage.ProfileImagePath,
                 roles: new HashSet<string> { "User" }
@@ -95,7 +105,7 @@ public class AccountService : IAccountService
 
             var (user, _, _, roles) = authResult.Value;
 
-            var newUser = User.Create(user.Id, user.UserName, user.Email, request.Password,
+            var newUser = User.Create(user.Id, user.UserName, user.Email, 
                 profileImage.ProfileImageBytes, profileImage.ProfileImagePath, roles);
 
             if (newUser.IsFailure)
@@ -144,11 +154,6 @@ public class AccountService : IAccountService
                 return Result.Fail(user.Errors);
             }
 
-            if (!user.Value.VerifyPassword(request.Password))
-            {
-                return Result.Fail(UserErrorFactory.InvalidPassword(nameof(request.Password)));
-            }
-
             var auth = await _keycloakService.LoginUserAync(request, cancellationToken);
 
             if (auth.IsFailure)
@@ -157,6 +162,49 @@ public class AccountService : IAccountService
             }
 
             return auth.Value;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<Result<bool>> ForgotPasswordAsync(ForgetPasswordRequestDTO request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var applicationUser = await _userRepository.GetUserByEmailAsync(request.Email, cancellationToken);
+
+            if(applicationUser == null)
+            {
+                return Result.Fail(UserErrorFactory.UserNotFoundByEmail(request.Email));
+            }
+
+            var user = User.From(applicationUser);
+
+            if (user.IsFailure)
+            {
+                return Result.Fail(user.Errors);
+            }
+
+            var token = _tokenService.GeneratePasswordResetToken(user.Value);
+
+            var allowedOrigins = _configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ??
+                throw new NullReferenceException("'AllowedOrigins' cannot be null");
+
+            var clientUrl = allowedOrigins[0];
+
+            if (string.IsNullOrWhiteSpace(clientUrl))
+            {
+                throw new ArgumentNullException(nameof(clientUrl), "'ApplicationUrl' cannot be null or empty.");
+            }
+
+            var resetLink = $"{clientUrl}/forgot-password?token={token}&userId={Uri.EscapeDataString(user.Value.Id)}";
+
+          
+            await _emailSender.SendPasswordResetEmail(request.Email, resetLink, TimeSpan.FromMinutes(15));
+
+            return true;
         }
         catch (Exception)
         {
@@ -245,6 +293,42 @@ public class AccountService : IAccountService
 
             _unitOfWork.Rollback();
 
+            throw;
+        }
+    }
+
+    public async Task<Result<bool>> UpdateUserPasswordAsync(UpdatePasswordRequestDTO request, 
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            bool isTokenValid = _tokenService.ValidatePasswordResetToken(request.Token);
+
+            if (!isTokenValid)
+            {
+                return Result.Fail(UserErrorFactory.InvalidTokenError());
+            }
+
+            var userExisting = await _userRepository.GetUserByIdAsync(request.UserId, cancellationToken);
+
+            if (userExisting == null)
+            {
+                return Result.Fail(UserErrorFactory.UserNotFoundById(request.UserId));
+            }
+
+            var user = User.From(userExisting);
+
+            if (user.IsFailure)
+            {
+                return Result.Fail(user.Errors);
+            }
+
+            await _keycloakService.UpdateUserPasswordAsync(user.Value.Id, request.NewPassword, cancellationToken);
+
+            return true;
+        }
+        catch (Exception)
+        {
             throw;
         }
     }

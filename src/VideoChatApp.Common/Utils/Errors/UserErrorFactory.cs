@@ -46,13 +46,31 @@ public sealed class UserErrorFactory
     }
 
     /// <summary>
-    /// Creates a conflict error for an existing email.
+    /// Creates a conflict error for an existing username without specifying the username.
     /// </summary>
-    /// <param name="email">The email that already exists.</param>
     /// <returns>An <see cref="Error"/> instance representing a conflict error.</returns>
-    public static Error EmailAlreadyExists(string email)
+    public static Error UsernameAlreadyExists()
     {
-        return Error.Conflict($"The email '{email}' is already registered.", "ERR_DUPLICATE_EMAIL");
+        return Error.Conflict("An account with the provided username is already registered.", "ERR_DUPLICATE_USERNAME");
+    }
+
+    ///// <summary>
+    ///// Creates a conflict error for an existing email.
+    ///// </summary>
+    ///// <param name="email">The email that already exists.</param>
+    ///// <returns>An <see cref="Error"/> instance representing a conflict error.</returns>
+    //public static Error EmailAlreadyExists(string email)
+    //{
+    //    return Error.Conflict($"The email '{email}' is already registered.", "ERR_DUPLICATE_EMAIL");
+    //}
+
+    /// <summary>
+    /// Creates a conflict error for an existing email without specifying the email address.
+    /// </summary>
+    /// <returns>An <see cref="Error"/> instance representing a conflict error.</returns>
+    public static Error EmailAlreadyExists()
+    {
+        return Error.Conflict("An account with the provided email is already registered.", "ERR_DUPLICATE_EMAIL");
     }
 
     /// <summary>
@@ -66,6 +84,16 @@ public sealed class UserErrorFactory
     }
 
     /// <summary>
+    /// Creates an error indicating that the provided token is no longer valid.
+    /// </summary>
+    /// <returns>An <see cref="Error"/> instance representing an invalid token error.</returns>
+    public static Error InvalidTokenError()
+    {
+        // Cria e retorna um erro de token inválido
+        return Error.Unauthorized("The provided token is no longer valid.", "ERR_TOKEN_INVALID");
+    }
+
+    /// <summary>
     /// Creates an error indicating that the authentication token may be invalid or expired.
     /// </summary>
     /// <param name="resource">The resource or endpoint where the authentication failure occurred.</param>
@@ -74,7 +102,6 @@ public sealed class UserErrorFactory
     {
         return Error.Unauthorized($"The authentication token may be invalid or expired while accessing '{resource}'.", "ERR_INVALID_OR_EXPIRED_TOKEN");
     }
-
 
     ///// <summary>
     ///// Creates a forbidden error indicating that the user does not have access to a specified resource.

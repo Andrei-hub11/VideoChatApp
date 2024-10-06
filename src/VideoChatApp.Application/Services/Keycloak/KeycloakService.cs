@@ -2,12 +2,10 @@
 using System.Text;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Configuration;
 
 using VideoChatApp.Domain.Exceptions;
 using VideoChatApp.Application.Contracts.Services;
-using VideoChatApp.Contracts.Utils;
 using VideoChatApp.Contracts.Request;
 using VideoChatApp.Contracts.Response;
 using VideoChatApp.Contracts.Models;
@@ -18,6 +16,7 @@ using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Common.Utils.Errors;
 using VideoChatApp.Domain.Entities;
 using VideoChatApp.Application.Contracts.Logging;
+using VideoChatApp.Common.Helpers;
 
 namespace VideoChatApp.Application.Services.Keycloak;
 
@@ -26,18 +25,16 @@ public class KeycloakService : IKeycloakService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly ILoggerHelper<KeycloakService> _logger;
-    private readonly IErrorMapper _errorMapper;
     private readonly IKeycloakServiceErrorHandler _keycloakServiceErrorHandler;
     private readonly TimeSpan _tokenExpiryBuffer = TimeSpan.FromMinutes(1);
     private KeycloakToken _cachedToken = default!;
     private DateTimeOffset _tokenExpiration = DateTimeOffset.MinValue;
 
     public KeycloakService(HttpClient httpClient, IConfiguration configuration, ILoggerHelper<KeycloakService> logger,
-        IErrorMapper errorMapper, IKeycloakServiceErrorHandler keycloakServiceErrorHandler)
+        IKeycloakServiceErrorHandler keycloakServiceErrorHandler)
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _errorMapper = errorMapper;
         _keycloakServiceErrorHandler = keycloakServiceErrorHandler;
         _logger = logger;
     }
@@ -88,18 +85,8 @@ public class KeycloakService : IKeycloakService
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-
-                if (response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.Conflict)
-                {
-                    var errorObj = JObject.Parse(errorContent);
-                    var errorMessage = errorObj["errorMessage"]?.ToString();
-                    var error = _errorMapper.MapHttpErrorToAppError(response.StatusCode, errorMessage ?? errorContent);
-
-                    return Result.Fail(error);
-                }
-
-                throw new BadRequestException(errorContent);
+                var resultMap = await _keycloakServiceErrorHandler.ExtractErrorFromResponse(response);
+                return Result.Fail(resultMap.Errors);
             }
 
             newUser = await GetUserByNameAsync(request.UserName);
@@ -127,6 +114,11 @@ public class KeycloakService : IKeycloakService
 
             var userToken = await GetUserTokenAsync(request.UserName, request.Password);
 
+            if (userToken.IsFailure)
+            {
+                return Result.Fail(userToken.Errors);
+            }
+
             var roles = await GetRolesAsync(newUser.Value.Id);
 
             if (roles.IsFailure)
@@ -136,8 +128,8 @@ public class KeycloakService : IKeycloakService
 
             isRollback = false;
 
-            return new AuthResponseDTO(newUser.Value.ToResponseDTO(), userToken.AccessToken, userToken.RefreshToken,
-                roles.Value.ToResponseDTO());
+            return new AuthResponseDTO(newUser.Value.ToResponseDTO(), userToken.Value.AccessToken, 
+                userToken.Value.RefreshToken, roles.Value.ToResponseDTO());
         }
         catch (Exception)
         {
@@ -170,6 +162,11 @@ public class KeycloakService : IKeycloakService
 
             var userToken = await GetUserTokenAsync(request.Email, request.Password);
 
+            if (userToken.IsFailure)
+            {
+                return Result.Fail(userToken.Errors);
+            }
+
             var user = await GetUserByEmailAsync(request.Email);
 
             if (user.IsFailure)
@@ -184,8 +181,8 @@ public class KeycloakService : IKeycloakService
                 return Result.Fail(roles.Errors);
             }
 
-            return new AuthResponseDTO(user.Value.ToResponseDTO(), AccessToken: userToken.AccessToken,
-                RefreshToken: userToken.RefreshToken, Roles: roles.Value.ToResponseDTO());
+            return new AuthResponseDTO(user.Value.ToResponseDTO(), AccessToken: userToken.Value.AccessToken,
+                RefreshToken: userToken.Value.RefreshToken, Roles: roles.Value.ToResponseDTO());
         }
         catch (Exception)
         {
@@ -379,7 +376,7 @@ public class KeycloakService : IKeycloakService
         return tokenResponse;
     }
 
-    private async Task<KeycloakToken> GetUserTokenAsync(string username, string password)
+    private async Task<Result<KeycloakToken>> GetUserTokenAsync(string username, string password)
     {
         var formData = new Dictionary<string, string>
     {
@@ -397,8 +394,8 @@ public class KeycloakService : IKeycloakService
 
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Request failed: {response.StatusCode}, {error}");
+            var result = await _keycloakServiceErrorHandler.ExtractErrorFromResponse(response);
+            return Result.Fail(result.Errors);
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -531,17 +528,10 @@ public class KeycloakService : IKeycloakService
 
         var response = await _httpClient.GetAsync(rolesUrl);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
-        {
-            var result = await _keycloakServiceErrorHandler.HandleNotFoundErrorAsync(response, userId);
-
-            return Result.Fail(result.Errors);
-        }
-
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve roles for userId = '{userId}': {response.StatusCode}, {error}");
+            var result = await _keycloakServiceErrorHandler.ExtractErrorFromResponse(response);
+            return Result.Fail(result.Errors);
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -649,9 +639,38 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to update user {user.Id}: {response.StatusCode}, {errorContent}");
+            throw new BadRequestException($"Failed to update user {user.Id}: {response.StatusCode}, {errorContent}");
         }
     }
+
+    public async Task UpdateUserPasswordAsync(string userId, string newPassword, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var tokenResponse = await GetAdminTokenAsync();
+
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+
+        var resetPasswordUrl = $"http://localhost:8080/admin/realms/chat-app/users/{userId}/reset-password";
+
+        var resetPasswordPayload = new
+        {
+            type = "password",
+            value = newPassword,
+            temporary = false
+        };
+
+        var json = JsonConvert.SerializeObject(resetPasswordPayload);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PutAsync(resetPasswordUrl, content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new BadRequestException($"Failed to reset password for user {userId}: {response.StatusCode}, {errorContent}");
+        }
+    }
+
 
     public async Task<bool> DeleteUserByIdAsync(string userId)
     {

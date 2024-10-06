@@ -74,6 +74,16 @@ public class AccountController : ControllerBase
             onFailure: (errors) => errors.ToProblemDetailsResult());
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgetPasswordRequestDTO request, CancellationToken cancellationToken)
+    {
+        var result = await _accountService.ForgotPasswordAsync(request, cancellationToken);
+
+        return result.Match(
+            onSuccess: (response) => Ok(response),
+            onFailure: (errors) => errors.ToProblemDetailsResult());
+    }
+
     [HttpPost("token-renew")]
     public async Task<IActionResult> RefreshAccessToken([FromBody] UpdateAccessTokenRequestDTO request,
         CancellationToken cancellationToken)
@@ -94,6 +104,17 @@ public class AccountController : ControllerBase
 
         return result.Match(
             onSuccess: (user) => Ok(user),
+            onFailure: (errors) => errors.ToProblemDetailsResult());
+    }
+
+    [HttpPut("update-password")]
+    public async Task<IActionResult> UpdateUserPassword([FromBody] UpdatePasswordRequestDTO request, 
+        CancellationToken cancellationToken)
+    {
+        var result = await _accountService.UpdateUserPasswordAsync(request, cancellationToken);
+
+        return result.Match(
+            onSuccess: (response) => Ok(response),
             onFailure: (errors) => errors.ToProblemDetailsResult());
     }
 }
