@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-
 using VideoChatApp.Application.Common.Result;
 using VideoChatApp.Application.Contracts.Data;
 using VideoChatApp.Application.Contracts.Email;
@@ -30,9 +29,15 @@ public class AccountService : IAccountService
     private readonly IConfiguration _configuration;
     private readonly IAccountServiceErrorHandler _accountServiceErrorHandler;
 
-    public AccountService(IUnitOfWork unitOfWork, IKeycloakService keycloakService, ITokenService tokenService,
-        IImagesService imagesService, IEmailSender emailSender, IConfiguration configuration,
-        IAccountServiceErrorHandler accountServiceErrorHandler)
+    public AccountService(
+        IUnitOfWork unitOfWork,
+        IKeycloakService keycloakService,
+        ITokenService tokenService,
+        IImagesService imagesService,
+        IEmailSender emailSender,
+        IConfiguration configuration,
+        IAccountServiceErrorHandler accountServiceErrorHandler
+    )
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _userRepository = unitOfWork.GetRepository<IUserRepository>();
@@ -44,13 +49,18 @@ public class AccountService : IAccountService
         _accountServiceErrorHandler = accountServiceErrorHandler;
     }
 
-    public async Task<Result<UserResponseDTO>> GetUserAsync(string accessToken, CancellationToken cancellationToken)
+    public async Task<Result<UserResponseDTO>> GetUserAsync(
+        string accessToken,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
             if (string.IsNullOrWhiteSpace(accessToken))
             {
-                return Result.Fail(Error.Unauthorized("Access token is missing.", "ERR_UNAUTHORIZED_ACCESS"));
+                return Result.Fail(
+                    Error.Unauthorized("Access token is missing.", "ERR_UNAUTHORIZED_ACCESS")
+                );
             }
 
             var userInfo = await _keycloakService.GetUserInfoAsync(accessToken, cancellationToken);
@@ -68,12 +78,18 @@ public class AccountService : IAccountService
         }
     }
 
-    public async Task<Result<AuthResponseDTO>> RegisterUserAsync(UserRegisterRequestDTO request, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponseDTO>> RegisterUserAsync(
+        UserRegisterRequestDTO request,
+        CancellationToken cancellationToken
+    )
     {
         ProfileImage profileImage = default!;
         try
         {
-            var userExisting = await _userRepository.GetUserByEmailAsync(request.Email, cancellationToken);
+            var userExisting = await _userRepository.GetUserByEmailAsync(
+                request.Email,
+                cancellationToken
+            );
 
             if (userExisting != null)
             {
@@ -96,7 +112,11 @@ public class AccountService : IAccountService
                 return Result.Fail(preliminaryUser.Errors);
             }
 
-            var authResult = await _keycloakService.RegisterUserAync(request, profileImage.ProfileImagePath, cancellationToken);
+            var authResult = await _keycloakService.RegisterUserAync(
+                request,
+                profileImage.ProfileImagePath,
+                cancellationToken
+            );
 
             if (authResult.IsFailure)
             {
@@ -105,18 +125,31 @@ public class AccountService : IAccountService
 
             var (user, _, _, roles) = authResult.Value;
 
-            var newUser = User.Create(user.Id, user.UserName, user.Email, 
-                profileImage.ProfileImageBytes, profileImage.ProfileImagePath, roles);
+            var newUser = User.Create(
+                user.Id,
+                user.UserName,
+                user.Email,
+                profileImage.ProfileImageBytes,
+                profileImage.ProfileImagePath,
+                roles
+            );
 
             if (newUser.IsFailure)
             {
-                await _accountServiceErrorHandler.HandleRegistrationFailureAsync(user, user.ProfileImagePath);
+                await _accountServiceErrorHandler.HandleRegistrationFailureAsync(
+                    user,
+                    user.ProfileImagePath
+                );
 
                 return Result.Fail(newUser.Errors);
             }
 
             await _userRepository.CreateApplicationUser(newUser.Value, cancellationToken);
-            await _userRepository.AddRolesToUser(newUser.Value.Id, newUser.Value.Roles, cancellationToken);
+            await _userRepository.AddRolesToUser(
+                newUser.Value.Id,
+                newUser.Value.Roles,
+                cancellationToken
+            );
 
             _unitOfWork.Commit();
 
@@ -126,8 +159,10 @@ public class AccountService : IAccountService
         {
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
-                await _accountServiceErrorHandler.HandleUnexpectedRegistrationExceptionAsync(request.Email,
-                    profileImage?.ProfileImagePath);
+                await _accountServiceErrorHandler.HandleUnexpectedRegistrationExceptionAsync(
+                    request.Email,
+                    profileImage?.ProfileImagePath
+                );
             }
 
             _unitOfWork.Rollback();
@@ -136,11 +171,17 @@ public class AccountService : IAccountService
         }
     }
 
-    public async Task<Result<AuthResponseDTO>> LoginUserAsync(UserLoginRequestDTO request, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponseDTO>> LoginUserAsync(
+        UserLoginRequestDTO request,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
-            var userExisting = await _userRepository.GetUserByEmailAsync(request.Email, cancellationToken);
+            var userExisting = await _userRepository.GetUserByEmailAsync(
+                request.Email,
+                cancellationToken
+            );
 
             if (userExisting == null)
             {
@@ -169,13 +210,19 @@ public class AccountService : IAccountService
         }
     }
 
-    public async Task<Result<bool>> ForgotPasswordAsync(ForgetPasswordRequestDTO request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> ForgotPasswordAsync(
+        ForgetPasswordRequestDTO request,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
-            var applicationUser = await _userRepository.GetUserByEmailAsync(request.Email, cancellationToken);
+            var applicationUser = await _userRepository.GetUserByEmailAsync(
+                request.Email,
+                cancellationToken
+            );
 
-            if(applicationUser == null)
+            if (applicationUser == null)
             {
                 return Result.Fail(UserErrorFactory.UserNotFoundByEmail(request.Email));
             }
@@ -189,20 +236,28 @@ public class AccountService : IAccountService
 
             var token = _tokenService.GeneratePasswordResetToken(user.Value);
 
-            var allowedOrigins = _configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ??
-                throw new NullReferenceException("'AllowedOrigins' cannot be null");
+            var allowedOrigins =
+                _configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                ?? throw new NullReferenceException("'AllowedOrigins' cannot be null");
 
             var clientUrl = allowedOrigins[0];
 
             if (string.IsNullOrWhiteSpace(clientUrl))
             {
-                throw new ArgumentNullException(nameof(clientUrl), "'ApplicationUrl' cannot be null or empty.");
+                throw new ArgumentNullException(
+                    nameof(clientUrl),
+                    "'ApplicationUrl' cannot be null or empty."
+                );
             }
 
-            var resetLink = $"{clientUrl}/forgot-password?token={token}&userId={Uri.EscapeDataString(user.Value.Id)}";
+            var resetLink =
+                $"{clientUrl}/forgot-password?token={token}&userId={Uri.EscapeDataString(user.Value.Id)}";
 
-          
-            await _emailSender.SendPasswordResetEmail(request.Email, resetLink, TimeSpan.FromMinutes(15));
+            await _emailSender.SendPasswordResetEmail(
+                request.Email,
+                resetLink,
+                TimeSpan.FromMinutes(15)
+            );
 
             return true;
         }
@@ -212,17 +267,27 @@ public class AccountService : IAccountService
         }
     }
 
-    public async Task<Result<UpdateAccessTokenResponseDTO>> UpdateAccessTokenAsync(UpdateAccessTokenRequestDTO request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateAccessTokenResponseDTO>> UpdateAccessTokenAsync(
+        UpdateAccessTokenRequestDTO request,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
             if (string.IsNullOrWhiteSpace(request.RefreshToken))
             {
-                return Result.Fail(ErrorFactory.CreateValidationError("RefreshToken not provider",
-                    nameof(request.RefreshToken)));
+                return Result.Fail(
+                    ErrorFactory.CreateValidationError(
+                        "RefreshToken not provider",
+                        nameof(request.RefreshToken)
+                    )
+                );
             }
 
-            var result = await _keycloakService.RefreshAccessTokenAsync(request.RefreshToken, cancellationToken);
+            var result = await _keycloakService.RefreshAccessTokenAsync(
+                request.RefreshToken,
+                cancellationToken
+            );
 
             return new UpdateAccessTokenResponseDTO(result.AccessToken);
         }
@@ -232,13 +297,27 @@ public class AccountService : IAccountService
         }
     }
 
-    public async Task<Result<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserRequestDTO request, CancellationToken cancellationToken)
+    public async Task<Result<UserResponseDTO>> UpdateUserAsync(
+        string userId,
+        UpdateUserRequestDTO request,
+        CancellationToken cancellationToken
+    )
     {
         ApplicationUserMapping? userExisting = default;
         bool isRollback = true;
 
         try
         {
+            var userWithEmailExists = await _userRepository.GetUserByEmailAsync(
+                request.NewEmail,
+                cancellationToken
+            );
+
+            if (userWithEmailExists is not null && userWithEmailExists.Id != userId)
+            {
+                return Result.Fail(UserErrorFactory.EmailAlreadyExists());
+            }
+
             userExisting = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
 
             if (userExisting == null)
@@ -253,16 +332,24 @@ public class AccountService : IAccountService
                 return Result.Fail(user.Errors);
             }
 
-            var newImageBytes = Base64Helper.ConvertFromBase64String(request.ProfileImage);
+            var newImageBytes = Base64Helper.ConvertFromBase64String(request.NewProfileImage);
             bool imagesAreDifferent = !newImageBytes.SequenceEqual(user.Value.ProfileImage);
 
-            var imageUpdateResult = await TryUpdateProfileImageAsync(user.Value, request.ProfileImage, imagesAreDifferent);
+            var imageUpdateResult = await TryUpdateProfileImageAsync(
+                user.Value,
+                request.NewProfileImage,
+                imagesAreDifferent
+            );
+
             if (imageUpdateResult.IsFailure)
             {
                 return Result.Fail(imageUpdateResult.Errors);
             }
 
-            var nameUpdated = user.Value.UpdateProfile(newUsername: request.UserName);
+            var nameUpdated = user.Value.UpdateProfile(
+                newUsername: request.NewUserName,
+                newEmail: request.NewEmail
+            );
 
             if (nameUpdated.IsFailure)
             {
@@ -282,13 +369,22 @@ public class AccountService : IAccountService
                 await _imagesService.DeleteProfileImageAsync(userExisting.ProfileImagePath);
             }
 
-            return user.Value.ToResponseDTO();
+            var updatedUser = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+
+            if (updatedUser == null)
+            {
+                return Result.Fail(UserErrorFactory.UserNotFoundById(userId));
+            }
+
+            return updatedUser.ToResponseDTO();
         }
         catch (Exception)
         {
             if (userExisting is not null && isRollback)
             {
-                await _accountServiceErrorHandler.HandleUnexpectedUpdateExceptionAsync(userExisting);
+                await _accountServiceErrorHandler.HandleUnexpectedUpdateExceptionAsync(
+                    userExisting
+                );
             }
 
             _unitOfWork.Rollback();
@@ -297,8 +393,10 @@ public class AccountService : IAccountService
         }
     }
 
-    public async Task<Result<bool>> UpdateUserPasswordAsync(UpdatePasswordRequestDTO request, 
-        CancellationToken cancellationToken)
+    public async Task<Result<bool>> UpdateUserPasswordAsync(
+        UpdatePasswordRequestDTO request,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -309,7 +407,10 @@ public class AccountService : IAccountService
                 return Result.Fail(UserErrorFactory.InvalidTokenError());
             }
 
-            var userExisting = await _userRepository.GetUserByIdAsync(request.UserId, cancellationToken);
+            var userExisting = await _userRepository.GetUserByIdAsync(
+                request.UserId,
+                cancellationToken
+            );
 
             if (userExisting == null)
             {
@@ -323,7 +424,11 @@ public class AccountService : IAccountService
                 return Result.Fail(user.Errors);
             }
 
-            await _keycloakService.UpdateUserPasswordAsync(user.Value.Id, request.NewPassword, cancellationToken);
+            await _keycloakService.UpdateUserPasswordAsync(
+                user.Value.Id,
+                request.NewPassword,
+                cancellationToken
+            );
 
             return true;
         }
@@ -333,7 +438,11 @@ public class AccountService : IAccountService
         }
     }
 
-    private async Task<Result<bool>> TryUpdateProfileImageAsync(User user, string profileImageBase64, bool imagesAreDifferent)
+    private async Task<Result<bool>> TryUpdateProfileImageAsync(
+        User user,
+        string profileImageBase64,
+        bool imagesAreDifferent
+    )
     {
         if (!imagesAreDifferent)
         {
@@ -341,7 +450,9 @@ public class AccountService : IAccountService
         }
 
         var newProfileImage = await _imagesService.GetProfileImageAsync(profileImageBase64);
-        return user.UpdateProfile(newProfileImage: newProfileImage.ProfileImageBytes, 
-            newProfileImagePath: newProfileImage.ProfileImagePath);
+        return user.UpdateProfile(
+            newProfileImage: newProfileImage.ProfileImageBytes,
+            newProfileImagePath: newProfileImage.ProfileImagePath
+        );
     }
 }

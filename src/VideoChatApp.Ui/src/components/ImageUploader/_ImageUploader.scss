@@ -1,0 +1,46 @@
+@import "../../utils/variables/variable";
+
+.image-uploader {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 10.6rem;
+  width: 10.6rem;
+  background: $primary-color;
+  border-radius: 50%;
+  cursor: pointer;
+
+  & img {
+    max-inline-size: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  & input {
+    display: none;
+  }
+
+  &--has-image {
+    background: unset;
+    cursor: default;
+
+    & img {
+      border-radius: 50%;
+    }
+  }
+}
+
+.image-uploader__trash-icon {
+  display: none;
+  position: absolute;
+  top: -1.2rem;
+  right: -0.7rem;
+  background: $white-color;
+  border-radius: 50%;
+
+  &--visible {
+    display: block;
+    cursor: pointer;
+  }
+}

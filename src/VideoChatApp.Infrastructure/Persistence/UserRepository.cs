@@ -129,7 +129,7 @@ public class UserRepository : IUserRepository
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        const string query = @"UPDATE ApplicationUsers SET UserName = @UserName, 
+        const string query = @"UPDATE ApplicationUsers SET UserName = @UserName, Email = @Email,
         ProfileImage = @ProfileImage, ProfileImagePath = @ProfileImagePath
         WHERE Id = @Id";
 
@@ -137,6 +137,7 @@ public class UserRepository : IUserRepository
         {
             user.Id,
             user.UserName,
+            user.Email,
             user.ProfileImage,
             user.ProfileImagePath,
         }, transaction: Transaction);

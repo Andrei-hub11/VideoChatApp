@@ -1,18 +1,20 @@
 import { isAxiosError } from "axios";
 import Cookies from "js-cookie";
 
-import { handleApiErrors } from "../../utils/helpers/handleApiErrors";
-
 import {
   AuthResponse,
   ForgotPasswordRequest,
   RenewTokenRequest,
   RenewTokenResponse,
   UpdatePasswordRequest,
+  UpdateProfileRequest,
   UserLoginRequest,
   UserRegisterRequest,
   UserResponse,
-} from "../../types/account/types";
+} from "../../contracts/account/types";
+
+import { handleApiErrors } from "../../utils/helpers/handleApiErrors";
+
 import api from "../base/api";
 
 export const getMe = async (): Promise<UserResponse> => {
@@ -95,6 +97,30 @@ export const refreshToken = async (
       throw await handleApiErrors(error);
     }
 
+    throw error;
+  }
+};
+
+export const updateProfile = async (
+  userId: string,
+  request: UpdateProfileRequest,
+): Promise<UserResponse> => {
+  try {
+    const { data } = await api.put<UserResponse>(
+      `/account/profile/${userId}`,
+      request,
+      {
+        headers: {
+          Authorization: `Bearer ${Cookies.get("accessToken")}`,
+        },
+      },
+    );
+
+    return data;
+  } catch (error: unknown) {
+    if (isAxiosError(error)) {
+      throw await handleApiErrors(error);
+    }
     throw error;
   }
 };

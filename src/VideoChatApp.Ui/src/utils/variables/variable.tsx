@@ -6,6 +6,7 @@ import PageTransition from "../../animations/PageTransition/PageTransition";
 import ForgotPassword from "../../pages/ForgotPassword/ForgotPassword";
 import Home from "../../pages/Home/Home";
 import Login from "../../pages/Login/Login";
+import Profile from "../../pages/Profile/Profile";
 import Register from "../../pages/Register/Register";
 
 export const routes: RouteObject[] = [
@@ -27,6 +28,16 @@ export const routes: RouteObject[] = [
       <ProtectedRoute>
         <PageTransition>
           <Home />
+        </PageTransition>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/profile",
+    element: (
+      <ProtectedRoute>
+        <PageTransition>
+          <Profile />
         </PageTransition>
       </ProtectedRoute>
     ),

@@ -1,39 +1,39 @@
 import { useEffect } from "react";
+import { useMutation } from "react-query";
 import { useNavigate } from "react-router-dom";
 
-import {
-  showUnknowError,
-  showUserNotFoundError,
-  showValidationErrors,
-} from "../../utils/helpers/alertErrors";
-import {
-  isLoginForm,
-  isNotFoundError,
-  isUnknownError,
-  isValidationError,
-} from "../../utils/helpers/guards";
+import { UserLoginRequest } from "@contracts/account/types";
+import { ErrorTypes } from "@contracts/http/types";
+import { AuthResponse } from "@contracts/httpResponse/types";
 
-import useAuth from "../../hooks/useAuth/useAuth";
-import useJwtState from "../../hooks/useJwtState";
-import useUserStore from "../../hooks/useUserStore";
+import { useJwtState, useUserStore } from "@hooks/exports";
+
+import { login } from "@services/exports";
+
+import { isLoginForm, handleException } from "@utils/exports";
 
 const useLoginLogic = () => {
   const navigate = useNavigate();
 
-  const { userLogin, isSuccess } = useAuth();
+  const { mutateAsync: loginMutation, isSuccess: isLoginSuccess } = useMutation<
+    AuthResponse,
+    ErrorTypes,
+    UserLoginRequest
+  >(login);
+
   const { saveToken, saveRefreshToken } = useJwtState();
   const { setUser, user } = useUserStore();
 
   useEffect(() => {
-    if (isSuccess && user) {
+    if (isLoginSuccess && user) {
       navigate("/home");
     }
-  }, [isSuccess, navigate, user]);
+  }, [isLoginSuccess, navigate, user]);
 
-  const login = async (values: unknown): Promise<boolean> => {
+  const handleLogin = async (values: unknown): Promise<boolean> => {
     try {
       if (isLoginForm(values)) {
-        const result = await userLogin({ ...values });
+        const result = await loginMutation({ ...values });
 
         setUser(result.user);
         saveToken(result.accessToken);
@@ -42,20 +42,7 @@ const useLoginLogic = () => {
         return true;
       }
     } catch (error: unknown) {
-      if (isValidationError(error)) {
-        showValidationErrors(error);
-        return false;
-      }
-
-      if (isNotFoundError(error) && error.status === 404) {
-        showUserNotFoundError(error);
-        return false;
-      }
-
-      if (isUnknownError(error)) {
-        showUnknowError(error);
-        return false;
-      }
+      handleException(error);
 
       return false;
     }
@@ -72,7 +59,7 @@ const useLoginLogic = () => {
   };
 
   return {
-    login,
+    handleLogin,
     handleRedirect,
     handleForgotPassword,
   };

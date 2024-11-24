@@ -1,5 +1,4 @@
 ﻿using System.Text;
-
 using Microsoft.AspNetCore.Mvc;
 using VideoChatApp.Contracts.Models;
 
@@ -7,17 +6,30 @@ namespace VideoChatApp.Api.Utils;
 
 public class ExceptionDetailsHelper
 {
-    public static string GetExceptionDetails(Exception ex, HttpContext context, int statusCode)
+    public static string GetExceptionDetails(Exception ex, HttpContext context)
     {
         var exceptionDetails = new StringBuilder();
-        exceptionDetails.AppendLine($"Erro ao processar a solicitação na rota '{context.Request.Path}'.");
-        exceptionDetails.AppendLine($"Código HTTP: {statusCode}");
-        exceptionDetails.AppendLine($"Mensagem de erro: {ex.Message}");
-        exceptionDetails.AppendLine($"Detalhes da exceção: {ex.ToString()}");
+        exceptionDetails.AppendLine($"[Error] Path: {context.Request.Path}");
+        exceptionDetails.AppendLine($"[Error] Method: {context.Request.Method}");
+        exceptionDetails.AppendLine($"[Error] Exception Type: {ex.GetType().FullName}");
+        exceptionDetails.AppendLine($"[Error] Message: {ex.Message}");
+        exceptionDetails.AppendLine($"[Error] Stack Trace: {ex.StackTrace}");
+
+        if (ex.InnerException != null)
+        {
+            exceptionDetails.AppendLine("[Error] Inner Exception:");
+            exceptionDetails.AppendLine($"[Error] Type: {ex.InnerException.GetType().FullName}");
+            exceptionDetails.AppendLine($"[Error] Message: {ex.InnerException.Message}");
+            exceptionDetails.AppendLine($"[Error] Stack Trace: {ex.InnerException.StackTrace}");
+        }
+
         return exceptionDetails.ToString();
     }
 
-    public static string GetBadRequestDetails(BadRequestObjectResult badRequestResult, HttpContext context)
+    public static string GetBadRequestDetails(
+        BadRequestObjectResult badRequestResult,
+        HttpContext context
+    )
     {
         var details = new StringBuilder();
 
@@ -36,7 +48,9 @@ public class ExceptionDetailsHelper
                 details.AppendLine($"Campo: {error.Key}");
                 foreach (var validationError in error.Value)
                 {
-                    details.AppendLine($"- Código: {validationError.Code}, Mensagem: {validationError.Description}");
+                    details.AppendLine(
+                        $"- Código: {validationError.Code}, Mensagem: {validationError.Description}"
+                    );
                 }
             }
         }
@@ -53,9 +67,13 @@ public class ExceptionDetailsHelper
         var details = new StringBuilder();
 
         details.AppendLine($"Erro ao processar a solicitação na rota '{context.Request.Path}'.");
-        details.AppendLine($"Código HTTP: {problemDetails.Status ?? StatusCodes.Status500InternalServerError}");
+        details.AppendLine(
+            $"Código HTTP: {problemDetails.Status ?? StatusCodes.Status500InternalServerError}"
+        );
         details.AppendLine($"Título: {problemDetails.Title ?? "Erro desconhecido"}");
-        details.AppendLine($"Detalhes: {problemDetails.Detail ?? "Nenhuma informação adicional disponível."}");
+        details.AppendLine(
+            $"Detalhes: {problemDetails.Detail ?? "Nenhuma informação adicional disponível."}"
+        );
         details.AppendLine($"Instância: {$"{context.Request.Method} {context.Request.Path}"}");
 
         if (problemDetails.Extensions != null && problemDetails.Extensions.Count > 0)

@@ -111,8 +111,8 @@ public class AccountServiceErrorHandler : IAccountServiceErrorHandler
                 throw new InvalidOperationException("Failed to create the domain user from the provided user mapping.");
             }
 
-            // Restore the original username and profile image path in the domain model
-            var updateResult = userDomain.Value.UpdateProfile(user.UserName, null, user.ProfileImagePath);
+            // Restore the original username, email and profile image path in the domain model
+            var updateResult = userDomain.Value.UpdateProfile(user.UserName, user.Email, null, user.ProfileImagePath);
 
             if (updateResult.IsFailure)
             {

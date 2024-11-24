@@ -1,0 +1,13 @@
+.profile {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+
+  &__form {
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+}

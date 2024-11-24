@@ -1,21 +1,19 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { UnknownError } from "../../contracts/http/types";
+
+import { useAuth, useJwtState } from "@hooks/exports";
+
 import {
+  isUnknownError,
+  isValidationError,
   showAuthError,
   showUnknowError,
   showValidationErrors,
-} from "../utils/helpers/alertErrors";
-import { isUnknownError, isValidationError } from "../utils/helpers/guards";
+} from "@utils/exports";
 
-import useAuth from "./useAuth/useAuth";
-import useJwtState from "./useJwtState";
-
-import { UnknownError } from "../types/http/types";
-
-// Função que renova o token
-
-export const useTokenRenewal = () => {
+const useTokenRenewal = () => {
   const navigate = useNavigate();
   const {
     saveToken,
@@ -97,3 +95,5 @@ export const useTokenRenewal = () => {
     showAuthError(apiError);
   };
 };
+
+export default useTokenRenewal;

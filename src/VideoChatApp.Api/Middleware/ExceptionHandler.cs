@@ -1,8 +1,6 @@
 ﻿using System.Net;
-
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-
 using VideoChatApp.Api.Utils;
 using VideoChatApp.Application.Contracts.Logging;
 using VideoChatApp.Domain.Exceptions;
@@ -12,57 +10,85 @@ namespace VideoChatApp.Api.Middleware;
 public class ExceptionHandler : IExceptionHandler
 {
     private readonly ILoggerHelper<ExceptionHandler> _logger;
-    public ExceptionHandler(ILoggerHelper<ExceptionHandler> logger)
+    private readonly IWebHostEnvironment _environment;
+
+    public ExceptionHandler(ILoggerHelper<ExceptionHandler> logger, IWebHostEnvironment environment)
     {
         _logger = logger;
+        _environment = environment;
     }
 
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, 
-        CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
     {
-
-        _logger.LogError(ExceptionDetailsHelper.GetExceptionDetails(exception, httpContext, 400));
+        // Log the full details for debugging
+        _logger.LogError(ExceptionDetailsHelper.GetExceptionDetails(exception, httpContext));
 
         var result = GetProblemDetails(httpContext, exception);
+        httpContext.Response.StatusCode = result.Status ?? 500;
 
         await httpContext.Response.WriteAsJsonAsync(result, cancellationToken: cancellationToken);
-
         return true;
     }
 
     private ProblemDetails GetProblemDetails(HttpContext context, Exception exception) =>
         exception switch
         {
-            BadRequestException badRequestException => CreateProblemDetails(
-                context, 
-                badRequestException, 
+            BadRequestException => CreateProblemDetails(
+                context,
                 HttpStatusCode.BadRequest,
-                "Something went wrong with your request. Sorry.",
-                exception.GetType().Name,
-                exception.Message
-                ),
+                "Invalid Request",
+                GetSafeErrorMessage(exception)
+            ),
+
+            UnauthorizedAccessException => CreateProblemDetails(
+                context,
+                HttpStatusCode.Unauthorized,
+                "Unauthorized",
+                "You are not authorized to perform this action."
+            ),
+
             _ => CreateProblemDetails(
                 context,
-                exception,
                 HttpStatusCode.InternalServerError,
-                "ServerError",
-                "An unexpected server error occurred. Please try again later.",
-                "An error occurred."
-            )
+                "Server Error",
+                "An unexpected error occurred. Please try again later."
+            ),
         };
 
-    private ProblemDetails CreateProblemDetails(HttpContext context, Exception exception, HttpStatusCode statusCode,
-        string type, string title, string detail)
+    private string GetSafeErrorMessage(Exception exception)
     {
-        var problemDetails = new ProblemDetails
+        // Only return detailed errors in development
+        if (_environment.IsDevelopment())
+        {
+            return exception.Message;
+        }
+
+        return exception switch
+        {
+            BadRequestException =>
+                "The request was invalid. Please check your input and try again.",
+            _ => "An error occurred while processing your request.",
+        };
+    }
+
+    private ProblemDetails CreateProblemDetails(
+        HttpContext context,
+        HttpStatusCode statusCode,
+        string title,
+        string detail
+    )
+    {
+        return new ProblemDetails
         {
             Status = (int)statusCode,
-            Type = type,
+            Type = $"https://httpstatuses.com/{(int)statusCode}",
             Title = title,
             Detail = detail,
-            Instance = $"{context.Request.Method} {context.Request.Path}"
+            Instance = $"{context.Request.Method} {context.Request.Path}",
         };
-
-        return problemDetails;
     }
 }

@@ -1,24 +1,13 @@
 import { setLogger, useMutation, useQuery } from "react-query";
 
 import {
-  getMe,
-  login,
-  refreshToken,
-  register,
-  resetPassword,
-  updatePassword,
-} from "../../services/account/account";
-import {
-  AuthResponse,
-  ForgotPasswordRequest,
   RenewTokenRequest,
   RenewTokenResponse,
-  UpdatePasswordRequest,
-  UserLoginRequest,
-  UserRegisterRequest,
-  UserResponse,
-} from "../../types/account/types";
-import { ErrorTypes } from "../../types/http/types";
+} from "../../contracts/account/types";
+import { ErrorTypes } from "../../contracts/http/types";
+import { UserResponse } from "@contracts/httpResponse/types";
+
+import { getMe, refreshToken } from "../../services/account/account";
 
 const useAuth = () => {
   // Fetch the current user
@@ -45,19 +34,6 @@ const useAuth = () => {
     },
   );
 
-  // Register mutation
-  const {
-    mutateAsync: registerMutation,
-    isSuccess: isRegisterSuccess,
-    isLoading: isRegisterLoading,
-  } = useMutation<AuthResponse, ErrorTypes, UserRegisterRequest>(register);
-
-  const {
-    mutateAsync: loginMutation,
-    isSuccess: isLoginSuccess,
-    isLoading: isLoginLoading,
-  } = useMutation<AuthResponse, ErrorTypes, UserLoginRequest>(login);
-
   const {
     mutateAsync: renewTokenMutation,
     isSuccess: isRenewTokenSuccess,
@@ -65,18 +41,6 @@ const useAuth = () => {
   } = useMutation<RenewTokenResponse, ErrorTypes, RenewTokenRequest>(
     refreshToken,
   );
-
-  const {
-    mutateAsync: resetPasswordMutation,
-    isSuccess: isResetPasswordSuccess,
-    isLoading: isResetPasswordLoading,
-  } = useMutation<boolean, ErrorTypes, ForgotPasswordRequest>(resetPassword);
-
-  const {
-    mutateAsync: updatePasswordMutation,
-    isSuccess: isUpdatePasswordSuccess,
-    isLoading: isUpdatePasswordLoading,
-  } = useMutation<boolean, ErrorTypes, UpdatePasswordRequest>(updatePassword);
 
   const fetchUserProfile = async (): Promise<UserResponse> => {
     const { data, error } = await refetchUser();
@@ -92,59 +56,21 @@ const useAuth = () => {
     return data;
   };
 
-  const registerUser = async (
-    request: UserRegisterRequest,
-  ): Promise<AuthResponse> => {
-    return await registerMutation(request);
-  };
-
-  const userLogin = async (
-    request: UserLoginRequest,
-  ): Promise<AuthResponse> => {
-    return await loginMutation(request);
-  };
-
-  const resetPasswordRequest = async (request: ForgotPasswordRequest) => {
-    const response = await resetPasswordMutation(request);
-    return response;
-  };
-
   const renewAccessToken = async (request: RenewTokenRequest) => {
     const response = await renewTokenMutation(request);
 
     return response;
   };
 
-  const updateUserPassword = async (
-    request: UpdatePasswordRequest,
-  ): Promise<boolean> => {
-    const response = await updatePasswordMutation(request);
-    return response;
-  };
+  const isLoading = isRenewTokenLoading;
 
-  const isLoading =
-    isRegisterLoading ||
-    isLoginLoading ||
-    isRenewTokenLoading ||
-    isResetPasswordLoading ||
-    isUpdatePasswordLoading;
-
-  const isSuccess =
-    isRegisterSuccess ||
-    isLoginSuccess ||
-    isRenewTokenSuccess ||
-    isResetPasswordSuccess ||
-    isUpdatePasswordSuccess;
+  const isSuccess = isRenewTokenSuccess;
 
   return {
     isLoading,
     isSuccess,
     fetchUserProfile,
-    registerUser,
-    userLogin,
-    resetPasswordRequest,
     renewAccessToken,
-    updateUserPassword,
   };
 };
 

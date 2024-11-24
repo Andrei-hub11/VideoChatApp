@@ -1,7 +1,6 @@
-﻿using System.Data;
-
+﻿using System.Collections.Generic;
+using System.Data;
 using Microsoft.Extensions.DependencyInjection;
-
 using VideoChatApp.Application.Contracts.Data;
 using VideoChatApp.Application.Contracts.Repositories;
 
@@ -14,6 +13,7 @@ internal sealed class UnitOfWork : IUnitOfWork
     private readonly IDbConnection _connection;
     private IDbTransaction _transaction;
     private bool _disposed;
+    private readonly List<IRepository> _repositories = new();
 
     public UnitOfWork(DapperContext dapperContext, IServiceProvider serviceProvider)
     {
@@ -24,10 +24,12 @@ internal sealed class UnitOfWork : IUnitOfWork
         _transaction = _connection.BeginTransaction();
     }
 
-    public TRepository GetRepository<TRepository>() where TRepository : class, IRepository
+    public TRepository GetRepository<TRepository>()
+        where TRepository : class, IRepository
     {
         var repository = _serviceProvider.GetRequiredService<TRepository>();
         repository.Initialize(_connection, _transaction);
+        _repositories.Add(repository);
         return repository;
     }
 
@@ -46,6 +48,11 @@ internal sealed class UnitOfWork : IUnitOfWork
         {
             _transaction?.Dispose();
             _transaction = _connection.BeginTransaction();
+
+            foreach (var repository in _repositories)
+            {
+                repository.Initialize(_connection, _transaction);
+            }
         }
     }
 
@@ -76,5 +83,3 @@ internal sealed class UnitOfWork : IUnitOfWork
         GC.SuppressFinalize(this);
     }
 }
-
-

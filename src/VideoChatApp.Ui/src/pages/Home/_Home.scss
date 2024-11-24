@@ -18,6 +18,12 @@
       height: 26.6rem;
       border-radius: 2rem;
       background: $primary-light-color;
+      transition: transform 0.2s ease-in-out;
+      cursor: pointer;
+    }
+
+    &-item:hover {
+      transform: scale(1.1);
     }
 
     &-item.primary--item {

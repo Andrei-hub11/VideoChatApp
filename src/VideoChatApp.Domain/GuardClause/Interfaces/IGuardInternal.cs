@@ -1,7 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 
-using Newtonsoft.Json.Linq;
-
 namespace VideoChatApp.Domain.GuardClause;
 
 public interface IGuardInternal

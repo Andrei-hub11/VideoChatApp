@@ -4,7 +4,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { routes } from "../../utils/variables/variable";
 
 function AnimatedRoutes() {
-  const location = useLocation(); // useLocation precisa estar dentro do Router
+  const location = useLocation();
 
   return (
     <AnimatePresence mode="wait">

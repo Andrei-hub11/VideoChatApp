@@ -2,7 +2,7 @@ import React from "react";
 
 import "./_ButtonStyle.scss";
 
-import { ButtonProps, Variants } from "../../types";
+import { ButtonProps, Variants } from "../../contracts";
 
 interface BtnProps {
   btn: ButtonProps;
@@ -18,12 +18,22 @@ function Button({ btn, children }: BtnProps) {
         {children}
       </a>
     ),
+    logout: () => (
+      <a role="button" onClick={onClick} className="btn btn--logout">
+        {children}
+      </a>
+    ),
     formAction: () => (
       <a
         role="button"
         onClick={disabled ? (e) => e.preventDefault() : onClick}
         className="btn primary btn--action"
       >
+        {children}
+      </a>
+    ),
+    popupAction: () => (
+      <a role="button" onClick={onClick} className="btn primary btn--popup">
         {children}
       </a>
     ),

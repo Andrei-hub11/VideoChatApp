@@ -4,8 +4,10 @@ import "./_Formikit.scss";
 
 import useFormkitLogic from "./useFormkitLogic";
 
+import renderForgotPasswordMessage from "../../utils/helpers/renderForgotPasswordMessage";
+
 import Loader from "../../animations/Loader/Loader";
-import { FormProps } from "../../types";
+import { FormProps } from "../../contracts";
 import Button from "../Button/Button";
 
 function Formkit({
@@ -27,7 +29,6 @@ function Formkit({
     isLoading,
     isPasswordVisible,
     inputRefs,
-    renderForgotPasswordMessage,
   } = useFormkitLogic({
     fields: fieldsForm,
     handleFormAction,
@@ -88,7 +89,12 @@ function Formkit({
                 />
               ) : null}
             </div>
-            {renderForgotPasswordMessage(field)}
+            {renderForgotPasswordMessage({
+              field,
+              errors,
+              touched,
+              forgotPasswordAction: forgotPasswordAction,
+            })}
             {field.type !== "password" ? (
               <div>
                 <small

@@ -84,7 +84,7 @@ public sealed class User
         return errors.AsReadOnly();
     }
 
-    private static ReadOnlyCollection<ValidationError> ValidateProfileUpdate(string? newUsername,
+    private static ReadOnlyCollection<ValidationError> ValidateProfileUpdate(string? newUsername, string? newEmail,
         byte[]? newProfileImage, string? newProfileImagePath)
     {
         var errors = new List<ValidationError>();
@@ -94,20 +94,29 @@ public sealed class User
             errors.AddRange(ValidateImage(newProfileImage, newProfileImagePath));
         }
 
-        GuardResult result = default!;
-
-        if (newUsername is not null)
+        GuardResult result = Guard.For().Use(guard =>
         {
-            result = Guard
-            .For()
-            .Use(guard =>
+            if (newUsername is not null)
             {
                 guard
                 .IsNullOrWhiteSpace(newUsername, "UserName")
-                .MaxLength(newUsername, 120, "UserName")
-                .DoNotThrowOnError();
-            });
-        }
+                .MaxLength(newUsername, 120, "UserName");
+            }
+
+            if (newEmail is not null)
+            {
+                guard
+                .IsNullOrWhiteSpace(newEmail, "Email")
+                .MatchesPattern(
+                    newEmail,
+                    @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$",
+                    "The 'Email' is invalid",
+                    "ERR_EMAIL_INVALID", "Email"
+                );
+            }
+
+            guard.DoNotThrowOnError();
+        });
 
         if (result is not null && result.Errors.Any())
         {
@@ -187,10 +196,10 @@ public sealed class User
         return result.Errors;
     }
 
-    public Result<bool> UpdateProfile(string? newUsername = null,
+    public Result<bool> UpdateProfile(string? newUsername = null, string? newEmail = null,
         byte[]? newProfileImage = null, string? newProfileImagePath = null)
     {
-        var errors = ValidateProfileUpdate(newUsername, newProfileImage, newProfileImagePath);
+        var errors = ValidateProfileUpdate(newUsername, newEmail, newProfileImage, newProfileImagePath);
 
         if (errors.Count != 0)
         {
@@ -198,6 +207,7 @@ public sealed class User
         }
 
         UserName = newUsername ?? UserName;
+        Email = newEmail ?? Email;
         ProfileImage = newProfileImage ?? ProfileImage;
         ProfileImagePath = newProfileImagePath ?? ProfileImagePath;
 

@@ -3,13 +3,14 @@ import {
   LoginForm,
   RegisterForm,
   UpdatePasswordRequest,
+  UpdateProfileForm,
   UserRegisterRequest,
-} from "../../types/account/types";
+} from "../../contracts/account/types";
 import {
   NotFoundError,
   UnknownError,
   ValidationError,
-} from "../../types/http/types";
+} from "../../contracts/http/types";
 
 export function isNotFoundError(obj: unknown): obj is NotFoundError {
   return (
@@ -94,6 +95,19 @@ export function isLoginForm(obj: unknown): obj is LoginForm {
 export function isUserRegisterRequest(
   obj: unknown,
 ): obj is UserRegisterRequest {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "userName" in obj &&
+    typeof obj.userName === "string" &&
+    "email" in obj &&
+    typeof obj.email === "string" &&
+    "password" in obj &&
+    typeof obj.password === "string"
+  );
+}
+
+export function isUpdateProfileForm(obj: unknown): obj is UpdateProfileForm {
   return (
     typeof obj === "object" &&
     obj !== null &&

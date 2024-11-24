@@ -37,7 +37,7 @@ public class KeycloakServiceErrorHandler : IKeycloakServiceErrorHandler
         var errorMapping = new Dictionary<string, Func<IError>>()
     {
         //{ "User not found", () => UserErrorFactory.UserNotFoundById(identifier) },
-        { "invalid_grant", () => UserErrorFactory.InvalidPassword("Password") },
+        { "invalid_grant", () => UserErrorFactory.InvalidEmailOrPassword() },
         { "User exists with same email", () => UserErrorFactory.EmailAlreadyExists() },
         { "User exists with same username", () => UserErrorFactory.UsernameAlreadyExists() }
     };

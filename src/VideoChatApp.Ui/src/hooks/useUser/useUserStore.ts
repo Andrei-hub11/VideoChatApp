@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { UserResponse } from "../types/account/types";
+import { UserResponse } from "@contracts/httpResponse/types";
 
 interface UserState {
   user: UserResponse | null;

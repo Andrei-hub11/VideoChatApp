@@ -215,15 +215,17 @@ If the login fails, the response will include errors details like this:
 
 ### Update User Profile
 
-- URL: /api/v1/account/profile
-- HTTP Method: POST
+- URL: /api/v1/account/profile/{userId}
+- HTTP Method: PUT
 - Authentication Header: Required (Bearer token).
 - Request Body (JSON):
 
 ```
 {
-  "UserName": "new_username",
-  "ProfileImage": "base64_string_of_image"
+  "NewUserName": "new_username",
+  "NewEmail": "new_email@example.com",
+  "NewPassword": "newPassword123",
+  "NewProfileImage": "base64_string_of_image"
 }
 ```
 
@@ -281,5 +283,89 @@ If the update fails, the response will include errors details like this:
       }
     ]
   }
+}
+```
+
+### Forgot Password
+
+- URL: /api/v1/account/forgot-password
+- HTTP Method: POST
+- Authentication Header: Not required.
+- Request Body (JSON):
+
+```
+{
+  "Email": "user@example.com"
+}
+```
+
+- **Success Response (200 OK):**
+
+```
+true
+```
+
+- **Error Response (404 Not Found):**
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+  "Title": "ERR_USER_NOT_FOUND",
+  "Status": 404,
+  "Detail": "User with email = 'user@example.com' was not found.",
+  "Instance": "13f05fff-c52c-465c-b47e-933c6d3ec23f"
+}
+```
+
+### Update Password
+
+- URL: /api/v1/account/update-password
+- HTTP Method: PUT
+- Authentication Header: Not required.
+- Request Body (JSON):
+
+```
+{
+  "NewPassword": "newPassword123!@",
+  "UserId": "1a2b3c4d",
+  "Token": "reset_token_received_by_email"
+}
+```
+
+- **Success Response (200 OK):**
+
+```
+true
+```
+
+- **Error Response (422 Unprocessable Entity):**
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422",
+  "Title": "One or more validation errors occurred.",
+  "Status": 422,
+  "Detail": "See the errors property for details.",
+  "Instance": "dc560ab3-9c72-41a8-8649-43477283a637",
+  "Errors": {
+    "Token": [
+      {
+        "Code": "ERR_INVALID_TOKEN",
+        "Description": "The provided token is invalid or has expired"
+      }
+    ]
+  }
+}
+```
+
+- **Error Response (404 Not Found):**
+
+```
+{
+  "Type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+  "Title": "ERR_USER_NOT_FOUND",
+  "Status": 404,
+  "Detail": "User with id = '1a2b3c4d' was not found.",
+  "Instance": "13f05fff-c52c-465c-b47e-933c6d3ec23f"
 }
 ```

@@ -1,0 +1,72 @@
+@import "../../utils/variables/variable";
+
+.call-popup {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 34.6rem;
+  height: 30rem;
+  background: #050810;
+  border-radius: 2rem;
+
+  &__icon {
+    margin-left: auto;
+    padding: 1rem 2rem 0;
+
+    & img {
+      cursor: pointer;
+    }
+  }
+
+  &__title {
+    margin-top: 0.8rem;
+    text-align: center;
+    font-size: 2.4rem;
+    font-weight: bold;
+    color: $white-color;
+    font-family: $headline-font;
+  }
+
+  &__container {
+    margin-top: 6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 3.6rem;
+  }
+
+  &__msg {
+    margin-right: auto;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: $white-color;
+  }
+
+  &__msg--variant {
+    color: red;
+  }
+
+  &__input {
+    width: 28rem;
+    height: 4rem;
+    font-weight: bold;
+    border-radius: 1rem;
+    border: none;
+    background: $primary-dark-color;
+    color: $white-color;
+    padding: 0 1rem;
+  }
+
+  &__action {
+    margin-top: 4.2rem;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.call-popup--active {
+  display: flex;
+}

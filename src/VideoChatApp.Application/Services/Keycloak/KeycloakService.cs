@@ -607,9 +607,9 @@ public class KeycloakService : IKeycloakService
         }
     }
 
-    public async Task UpdateUserAsync(User user, CancellationToken? cancellationToken = null)
+    public async Task UpdateUserAsync(User user, CancellationToken cancellationToken = default)
     {
-        cancellationToken?.ThrowIfCancellationRequested();
+        cancellationToken.ThrowIfCancellationRequested();
         var tokenResponse = await GetAdminTokenAsync();
 
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
@@ -634,11 +634,11 @@ public class KeycloakService : IKeycloakService
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
 
-        var response = await _httpClient.PutAsync(updateUserUrl, content);
+        var response = await _httpClient.PutAsync(updateUserUrl, content, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new BadRequestException($"Failed to update user {user.Id}: {response.StatusCode}, {errorContent}");
         }
     }
@@ -662,11 +662,11 @@ public class KeycloakService : IKeycloakService
         var json = JsonConvert.SerializeObject(resetPasswordPayload);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PutAsync(resetPasswordUrl, content);
+        var response = await _httpClient.PutAsync(resetPasswordUrl, content, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new BadRequestException($"Failed to reset password for user {userId}: {response.StatusCode}, {errorContent}");
         }
     }

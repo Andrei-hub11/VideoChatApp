@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  LoginForm,
+  RegisterForm,
+  UserRegisterRequest,
+} from "../../contracts/account/types";
+import {
+  NotFoundError,
+  UnknownError,
+  ValidationError,
+} from "../../contracts/http/types";
+
+import {
   isLoginForm,
   isNotFoundError,
   isRegisterForm,
@@ -8,17 +19,6 @@ import {
   isUserRegisterRequest,
   isValidationError,
 } from "../../utils/helpers/guards";
-
-import {
-  LoginForm,
-  RegisterForm,
-  UserRegisterRequest,
-} from "../../types/account/types";
-import {
-  NotFoundError,
-  UnknownError,
-  ValidationError,
-} from "../../types/http/types";
 
 // Adjust paths as necessary
 

@@ -1,0 +1,51 @@
+@import "../../utils/variables/variable";
+
+.header {
+  &__menu {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    top: 10.8rem;
+    right: 6.3rem;
+    width: 16rem;
+    height: 19rem;
+    background: $primary-color;
+    border-radius: 0.8rem;
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+      margin: 1.6rem 2.3rem;
+      gap: 0.6rem;
+    }
+
+    &-logout {
+      display: flex;
+      margin: auto auto 0.8rem auto;
+    }
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 12rem;
+    padding: 0.3rem 0;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+
+    &:hover {
+      background: $white-color;
+    }
+
+    &-p {
+      font-size: 1.4rem;
+      font-weight: bold;
+      letter-spacing: 0.1rem;
+    }
+
+    &--variant {
+      background: $white-color;
+    }
+  }
+}

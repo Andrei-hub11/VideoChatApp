@@ -6,7 +6,7 @@ import {
   NotFoundError,
   UnknownError,
   ValidationError,
-} from "../../types/http/types";
+} from "../../contracts/http/types";
 
 export const handleApiErrors = async (error: AxiosError): Promise<void> => {
   if (error.status === 404 && isNotFoundError(error.response?.data)) {

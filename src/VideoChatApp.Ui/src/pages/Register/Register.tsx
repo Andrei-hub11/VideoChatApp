@@ -4,18 +4,16 @@ import "./_Register.scss";
 
 import useRegisterLogic from "./useRegisterLogic";
 
-import { registerForm } from "../../utils/formfields/fields";
+import { registerForm } from "@utils/exports";
 
-import AuthHeader from "../../components/AuthHeader/AuthHeader";
-import Formkit from "../../components/Formkit/Formkit";
-
-import ImageInputIcon from "../../assets/icons/ic_twotone-add-a-photo.svg";
+import { AuthHeader, ImageUploader, Formkit } from "@components/exports";
 
 function Register() {
   const {
-    register,
+    handleRegister,
     handleRedirect,
     handleImageInputClick,
+    handleTrashClick,
     handleImageChange,
     profileImageInputRef,
     imagePreview,
@@ -38,19 +36,20 @@ function Register() {
         description="Registre-se para criar ou entrar em salas de videochamada e interagir com outros usuários"
       />
       <div className="register__form">
-        <div
-          className={`register__form-img ${imagePreview ? "form-img--variant" : ""}`}
-          onClick={handleImageInputClick}
-        >
-          <img src={imagePreview ? imagePreview : ImageInputIcon} alt="" />
-          <input
-            ref={profileImageInputRef}
-            onChange={handleImageChange}
-            type="file"
-            accept="image/png, image/jpeg, image/webp"
-          />
-        </div>
-        <Formkit {...{ fields: registerForm, handleFormAction: register }} />
+        <ImageUploader
+          {...{
+            imgUploaderProps: {
+              imagePreview,
+              handleImageInputClick,
+              handleTrashClick,
+              handleImageChange,
+              profileImageInputRef,
+            },
+          }}
+        />
+        <Formkit
+          {...{ fields: registerForm, handleFormAction: handleRegister }}
+        />
         <p className="register__form-navigation">
           Já possui uma conta? <span onClick={handleRedirect}>Fazer login</span>
         </p>

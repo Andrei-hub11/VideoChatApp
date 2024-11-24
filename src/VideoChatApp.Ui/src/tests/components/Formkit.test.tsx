@@ -5,7 +5,7 @@ import * as yup from "yup";
 
 import Formkit from "../../components/Formkit/Formkit";
 
-import { Field } from "../../types";
+import { Field } from "../../contracts";
 
 export const loginForm: Field[] = [
   {

@@ -38,6 +38,32 @@
   }
 }
 
+.btn--logout {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  color: $bg-color;
+  background: $white-color;
+  border: solid 0.1rem $white-color;
+  transition:
+    background 0.5s ease-in-out,
+    border 0.5s ease-in-out;
+  gap: 1rem;
+
+  &:hover {
+    background: $primary-color;
+    border: solid 0.1rem $bg-color;
+  }
+
+  @include for-size(medium-phone) {
+    padding: 0.6rem 3rem;
+  }
+
+  @include for-size(tablet-portrait-up) {
+    padding: 0.6rem 2.4rem;
+  }
+}
+
 .btn--action {
   padding: 0.6rem 14rem;
   font-weight: bold;
@@ -48,5 +74,20 @@
   &:hover {
     background: $primary-color;
     color: $primary-dark-color;
+  }
+}
+
+.btn--popup {
+  padding: 0.6rem 10rem;
+  font-weight: bold;
+  background: $primary-color;
+  color: $primary-dark-color;
+  transition:
+    background 0.5s ease-in-out,
+    color 0.5s ease-in-out;
+
+  &:hover {
+    background: $bg-color;
+    color: $white-color;
   }
 }

@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 
+import Image from "../../components/Image/Image";
+
 import LoaderIcon from "../../assets/icons/loader.svg";
 
 function Loader() {
@@ -19,7 +21,11 @@ function Loader() {
 
   return (
     <motion.div variants={rotation} initial="initial" animate="animated">
-      <img src={LoaderIcon} alt="Loader" className="loader" />
+      <Image
+        {...{
+          props: { src: LoaderIcon, alt: "Loader", width: 15, height: 15 },
+        }}
+      />
     </motion.div>
   );
 }

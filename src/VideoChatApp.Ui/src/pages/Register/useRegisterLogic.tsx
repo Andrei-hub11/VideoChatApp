@@ -1,26 +1,27 @@
 import { useEffect, useRef, useState } from "react";
+import { useMutation } from "react-query";
 import { useNavigate } from "react-router-dom";
+
+import { UserRegisterRequest } from "@contracts/account/types";
+import { ErrorTypes, UnknownError } from "@contracts/http/types";
+import { AuthResponse } from "@contracts/httpResponse/types";
+
+import { useJwtState } from "@hooks/exports";
+
+import { register } from "@services/exports";
 
 import {
   showUnknowError,
-  showUserNotFoundError,
-  showValidationErrors,
-} from "../../utils/helpers/alertErrors";
-import {
-  isNotFoundError,
   isRegisterForm,
-  isUnknownError,
-  isValidationError,
-} from "../../utils/helpers/guards";
-import { omit } from "../../utils/helpers/omit";
-
-import useAuth from "../../hooks/useAuth/useAuth";
-import useJwtState from "../../hooks/useJwtState";
-import { UnknownError } from "../../types/http/types";
+  handleException,
+  omit,
+} from "@utils/exports";
 
 const useRegisterLogic = () => {
+  const { mutateAsync: registerMutation, isSuccess: isRegisterSuccess } =
+    useMutation<AuthResponse, ErrorTypes, UserRegisterRequest>(register);
+
   const navigate = useNavigate();
-  const { registerUser, isSuccess } = useAuth();
   const { saveToken, saveRefreshToken } = useJwtState();
 
   const profileImageInputRef = useRef<HTMLInputElement | null>(null);
@@ -28,19 +29,17 @@ const useRegisterLogic = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isRegisterSuccess) {
       navigate("/home");
     }
-  }, [isSuccess, navigate]);
+  }, [isRegisterSuccess, navigate]);
 
-  const register = async (values: unknown): Promise<boolean> => {
+  const handleRegister = async (values: unknown): Promise<boolean> => {
     try {
       if (isRegisterForm(values)) {
         const newValues = omit(values, "passwordConfirmation");
 
-        console.log(base64Image);
-
-        const result = await registerUser({
+        const result = await registerMutation({
           ...newValues,
           profileImage: base64Image ?? "",
         });
@@ -51,20 +50,7 @@ const useRegisterLogic = () => {
         return true;
       }
     } catch (error: unknown) {
-      if (isValidationError(error)) {
-        showValidationErrors(error);
-        return false;
-      }
-
-      if (isNotFoundError(error) && error.status === 404) {
-        showUserNotFoundError(error);
-        return false;
-      }
-
-      if (isUnknownError(error)) {
-        showUnknowError(error);
-        return false;
-      }
+      handleException(error);
 
       return false;
     }
@@ -110,6 +96,11 @@ const useRegisterLogic = () => {
     }
   };
 
+  const handleTrashClick = () => {
+    setImagePreview(null);
+    setBase64Image("");
+  };
+
   const showImageInputError = () => {
     const imageError: UnknownError = {
       status: 400,
@@ -123,9 +114,10 @@ const useRegisterLogic = () => {
   };
 
   return {
-    register,
+    handleRegister,
     handleRedirect,
     handleImageInputClick,
+    handleTrashClick,
     handleImageChange,
     imagePreview,
     profileImageInputRef,

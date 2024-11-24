@@ -4,7 +4,7 @@ import {
   NotFoundError,
   UnknownError,
   ValidationError,
-} from "../../types/http/types";
+} from "../../contracts/http/types";
 
 export const showValidationErrors = (apiError: ValidationError) => {
   const errorMessages = Object.entries(apiError.Errors)

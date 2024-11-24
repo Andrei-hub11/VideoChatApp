@@ -3,11 +3,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, Mock, vi } from "vitest";
 
-import ProtectedRoute from "../../components/ProtectedRoute/ProtectedRoute";
-
 import useAuth from "../../hooks/useAuth/useAuth";
-import useJwtState from "../../hooks/useJwtState";
+import useJwtState from "../../hooks/useToken/useJwtStore";
 import useUserStore from "../../hooks/useUserStore";
+
+import ProtectedRoute from "../../components/ProtectedRoute/ProtectedRoute";
 
 // Mocking hooks
 vi.mock("../../hooks/useAuth/useAuth");

@@ -78,8 +78,9 @@
     }
   }
 
-  &__form-input--variant {
+  &__input--variant {
     color: red;
+    border: 0.1rem solid red !important;
 
     &:focus {
       border: 0.2rem solid red;

@@ -2,16 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  showAuthError,
-  showUnknowError,
-} from "../../utils/helpers/alertErrors";
-import { isUnknownError } from "../../utils/helpers/guards";
+  useAuthTransitionStore,
+  useAuth,
+  useJwtState,
+  useTokenRenewal,
+  useUserStore,
+} from "@hooks/exports";
+
+import { isUnknownError, showAuthError, showUnknowError } from "@utils/exports";
 
 import PageLoader from "../../animations/PageLoader/PageLoader";
-import useAuth from "../../hooks/useAuth/useAuth";
-import useJwtState from "../../hooks/useJwtState";
-import { useTokenRenewal } from "../../hooks/useTokenRenewal";
-import useUserStore from "../../hooks/useUserStore";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -27,6 +27,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   const { fetchUserProfile } = useAuth();
   const { setUser, user } = useUserStore();
+  const { setRedirectingToAuth } = useAuthTransitionStore();
 
   const { token } = useJwtState();
 
@@ -69,15 +70,19 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }, [fetchUserProfile, setUser, token, user, profileFetched]);
 
   useEffect(() => {
-    if (!isLoading && !user?.id) {
-      setIsExiting(true); // Ativar animação de saída
-      const timeout = setTimeout(() => {
-        navigate("/login", { state: { from: location } });
-      }, 500); // Atrasar a navegação para coincidir com a duração da animação
+    if (!isLoading && !token) {
+      setIsExiting(true);
 
-      return () => clearTimeout(timeout); // Limpar timeout
+      const timeout = setTimeout(() => {
+        //enable the page exit animation
+        setRedirectingToAuth(true);
+
+        navigate("/login", { state: { from: location } });
+      }, 500); // Delay navigation to match animation duration
+
+      return () => clearTimeout(timeout);
     }
-  }, [isLoading, user, navigate, location]);
+  }, [isLoading, token, navigate, location, setRedirectingToAuth]);
 
   if (isLoading) {
     return <PageLoader />;

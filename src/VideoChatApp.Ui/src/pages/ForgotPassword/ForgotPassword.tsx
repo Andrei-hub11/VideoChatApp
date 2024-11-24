@@ -1,16 +1,12 @@
 import { motion } from "framer-motion";
 
-import "./__ForgotPassword.scss";
+import "./_ForgotPassword.scss";
 
 import useForgotPasswordLogic from "./useForgotPasswordLogic";
 
-import {
-  passwordResetForm,
-  passwordResetRequestForm,
-} from "../../utils/formfields/fields";
+import { passwordResetForm, passwordResetRequestForm } from "@utils/exports";
 
-import AuthHeader from "../../components/AuthHeader/AuthHeader";
-import Formkit from "../../components/Formkit/Formkit";
+import { Formkit, AuthHeader } from "@components/exports";
 
 function ForgotPassword() {
   const { token, userId, forgotPassword, handleRedirect } =

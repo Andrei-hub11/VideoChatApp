@@ -1,5 +1,8 @@
 ﻿namespace VideoChatApp.Contracts.Request;
 
 public sealed record UpdateUserRequestDTO(
-    string UserName, 
-    string ProfileImage);
+    string NewUserName, 
+    string NewEmail,
+    string NewPassword,
+    string NewProfileImage
+  );

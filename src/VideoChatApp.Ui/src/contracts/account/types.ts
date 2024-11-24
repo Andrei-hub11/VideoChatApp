@@ -10,6 +10,12 @@ export type LoginForm = {
   password: string;
 };
 
+export type UpdateProfileForm = {
+  userName: string;
+  email: string;
+  password: string;
+};
+
 export type UserRegisterRequest = {
   userName: string;
   email: string;
@@ -35,6 +41,13 @@ export interface AuthResponse {
   refreshToken: string;
   roles: string[];
 }
+
+export type UpdateProfileRequest = {
+  newUserName: string;
+  newEmail: string;
+  newPassword: string;
+  newProfileImage: string;
+};
 
 export type RenewTokenRequest = {
   refreshToken: string;

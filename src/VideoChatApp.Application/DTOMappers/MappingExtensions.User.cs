@@ -1,4 +1,5 @@
-﻿using VideoChatApp.Contracts.Models;
+﻿using VideoChatApp.Contracts.DapperModels;
+using VideoChatApp.Contracts.Models;
 using VideoChatApp.Contracts.Response;
 using VideoChatApp.Domain.Entities;
 
@@ -17,6 +18,11 @@ public static class MappingExtensionsUser
     }
 
     public static UserResponseDTO ToResponseDTO(this UserInfoMapping user)
+    {
+        return new UserResponseDTO(user.Id, user.UserName, user.Email, user.ProfileImagePath);
+    }
+
+    public static UserResponseDTO ToResponseDTO(this ApplicationUserMapping user)
     {
         return new UserResponseDTO(user.Id, user.UserName, user.Email, user.ProfileImagePath);
     }

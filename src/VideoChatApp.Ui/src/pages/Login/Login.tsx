@@ -6,11 +6,10 @@ import useLoginLogic from "./useLoginLogic";
 
 import { loginForm } from "../../utils/formfields/fields";
 
-import AuthHeader from "../../components/AuthHeader/AuthHeader";
-import Formkit from "../../components/Formkit/Formkit";
+import { Formkit, AuthHeader } from "../../components/exports";
 
 function Login() {
-  const { login, handleRedirect, handleForgotPassword } = useLoginLogic();
+  const { handleLogin, handleRedirect, handleForgotPassword } = useLoginLogic();
 
   return (
     <motion.section
@@ -32,7 +31,7 @@ function Login() {
         <Formkit
           {...{
             fields: loginForm,
-            handleFormAction: login,
+            handleFormAction: handleLogin,
             forgotPasswordAction: handleForgotPassword,
           }}
         />

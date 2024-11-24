@@ -16,6 +16,18 @@ public sealed class UserErrorFactory
     }
 
     /// <summary>
+    /// Creates an error when the provided email or password is incorrect.
+    /// </summary>
+    /// <returns>An <see cref="Error"/> instance representing an email or password mismatch error.</returns>
+    public static ValidationError InvalidEmailOrPassword()
+    {
+        return Error.Validation(
+            "The provided email or password is incorrect.",
+            "ERR_INVALID_EMAIL_OR_PASSWORD",
+            "EmailOrPassword");
+    }
+
+    /// <summary>
     /// Creates a not found error for a user by ID.
     /// </summary>
     /// <param name="id">The user identifier.</param>
