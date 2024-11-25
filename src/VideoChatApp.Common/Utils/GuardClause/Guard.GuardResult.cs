@@ -1,6 +1,6 @@
 ﻿using VideoChatApp.Common.Utils.ResultError;
 
-namespace VideoChatApp.Domain.GuardClause;
+namespace VideoChatApp.Common.Utils.GuardClause;
 
 public class GuardResult
 {

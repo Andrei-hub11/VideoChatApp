@@ -16,18 +16,6 @@ public sealed class UserErrorFactory
     }
 
     /// <summary>
-    /// Creates an error when the provided email or password is incorrect.
-    /// </summary>
-    /// <returns>An <see cref="Error"/> instance representing an email or password mismatch error.</returns>
-    public static ValidationError InvalidEmailOrPassword()
-    {
-        return Error.Validation(
-            "The provided email or password is incorrect.",
-            "ERR_INVALID_EMAIL_OR_PASSWORD",
-            "EmailOrPassword");
-    }
-
-    /// <summary>
     /// Creates a not found error for a user by ID.
     /// </summary>
     /// <param name="id">The user identifier.</param>
@@ -113,6 +101,17 @@ public sealed class UserErrorFactory
     public static Error InvalidOrExpiredToken(string resource)
     {
         return Error.Unauthorized($"The authentication token may be invalid or expired while accessing '{resource}'.", "ERR_INVALID_OR_EXPIRED_TOKEN");
+    }
+
+    /// <summary>
+    /// Creates an error when the provided email or password is incorrect.
+    /// </summary>
+    /// <returns>An <see cref="Error"/> instance representing an email or password mismatch error.</returns>
+    public static Error InvalidEmailOrPassword()
+    {
+        return Error.Unauthorized(
+            "The provided email or password is incorrect.",
+            "ERR_INVALID_EMAIL_OR_PASSWORD");
     }
 
     ///// <summary>

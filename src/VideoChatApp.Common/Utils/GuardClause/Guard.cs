@@ -1,16 +1,13 @@
 ﻿using VideoChatApp.Common.Utils.ResultError;
 
-namespace VideoChatApp.Domain.GuardClause;
+namespace VideoChatApp.Common.Utils.GuardClause;
 
-public partial class Guard: IGuard, IGuardInternal, IDisposable
+public partial class Guard : IGuard, IGuardInternal, IDisposable
 {
     private bool _throwCalled = false;
     private List<ValidationError> ErrorList { get; set; } = [];
 
-    private Guard()
-    {
-
-    }
+    private Guard() { }
 
     public static IGuard For()
     {
@@ -30,7 +27,7 @@ public partial class Guard: IGuard, IGuardInternal, IDisposable
     public void ThrowIfInvalid()
     {
         _throwCalled = true;
-      // ...
+        // ...
     }
 
     public void DoNotThrowOnError()
@@ -42,7 +39,9 @@ public partial class Guard: IGuard, IGuardInternal, IDisposable
     {
         if (!_throwCalled)
         {
-            throw new InvalidOperationException("'ThrowIfInvalid' or 'DoNotThrowOnError' must be called to complete the chain.");
+            throw new InvalidOperationException(
+                "'ThrowIfInvalid' or 'DoNotThrowOnError' must be called to complete the chain."
+            );
         }
     }
 }

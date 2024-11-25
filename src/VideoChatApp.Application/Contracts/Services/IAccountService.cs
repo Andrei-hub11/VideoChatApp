@@ -6,13 +6,34 @@ namespace VideoChatApp.Application.Contracts.Services;
 
 public interface IAccountService
 {
-    Task<Result<UserResponseDTO>> GetUserAsync(string accessToken, CancellationToken cancellationToken);
-    Task<Result<AuthResponseDTO>> RegisterUserAsync(UserRegisterRequestDTO request, CancellationToken cancellationToken);
-    Task<Result<AuthResponseDTO>> LoginUserAsync(UserLoginRequestDTO request, CancellationToken cancellationToken);
-    Task<Result<bool>> ForgotPasswordAsync(ForgetPasswordRequestDTO request, CancellationToken cancellationToken);
-    Task<Result<UpdateAccessTokenResponseDTO>> UpdateAccessTokenAsync(UpdateAccessTokenRequestDTO request, 
-        CancellationToken cancellationToken);
-    Task<Result<bool>> UpdateUserPasswordAsync(UpdatePasswordRequestDTO request, CancellationToken cancellationToken);
-    Task<Result<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserRequestDTO request, 
-        CancellationToken cancellationToken);
+    Task<Result<UserResponseDTO>> GetUserAsync(
+        string accessToken,
+        CancellationToken cancellationToken
+    );
+    Task<Result<AuthResponseDTO>> RegisterUserAsync(
+        UserRegisterRequestDTO request,
+        CancellationToken cancellationToken
+    );
+    Task<Result<AuthResponseDTO>> LoginUserAsync(
+        UserLoginRequestDTO request,
+        CancellationToken cancellationToken
+    );
+    Task<Result<bool>> ForgotPasswordAsync(
+        ForgetPasswordRequestDTO request,
+        CancellationToken cancellationToken
+    );
+    Task<Result<UpdateAccessTokenResponseDTO>> UpdateAccessTokenAsync(
+        UpdateAccessTokenRequestDTO request,
+        CancellationToken cancellationToken
+    );
+    Task<Result<bool>> UpdateUserPasswordAsync(
+        UpdatePasswordRequestDTO request,
+        CancellationToken cancellationToken
+    );
+    Task<Result<UserResponseDTO>> UpdateUserAsync(
+        string userId,
+        UpdateUserRequestDTO request,
+        CancellationToken cancellationToken
+    );
+    Task CleanupTestUsersAsync(CancellationToken cancellationToken);
 }

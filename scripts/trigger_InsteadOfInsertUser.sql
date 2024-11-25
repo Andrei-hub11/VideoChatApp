@@ -9,7 +9,7 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO ApplicationUsers (Id, UserName, Email, PasswordHash, ProfileImage, ProfileImagePath)
-    SELECT Id, UserName, Email, PasswordHash, ProfileImage, ProfileImagePath
+    INSERT INTO ApplicationUsers (Id, UserName, Email, ProfileImage, ProfileImagePath)
+    SELECT Id, UserName, Email, ProfileImage, ProfileImagePath
     FROM inserted;
 END

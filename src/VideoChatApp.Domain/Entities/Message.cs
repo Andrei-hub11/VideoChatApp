@@ -1,8 +1,8 @@
 ﻿using System.Collections.ObjectModel;
 
 using VideoChatApp.Application.Common.Result;
+using VideoChatApp.Common.Utils.GuardClause;
 using VideoChatApp.Common.Utils.ResultError;
-using VideoChatApp.Domain.GuardClause;
 
 namespace VideoChatApp.Domain.Entities;
 

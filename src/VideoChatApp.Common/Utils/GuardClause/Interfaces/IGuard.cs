@@ -1,4 +1,4 @@
-﻿namespace VideoChatApp.Domain.GuardClause;
+﻿namespace VideoChatApp.Common.Utils.GuardClause;
 
 public interface IGuard
 {

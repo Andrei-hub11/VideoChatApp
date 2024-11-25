@@ -6,9 +6,10 @@ using VideoChatApp.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 {
-    builder.Services
-        .AddPresentation(builder.Configuration)
+    builder
+        .Services.AddPresentation(builder.Configuration)
         .AddApplication()
         .AddInfrastructure(builder.Configuration);
 }
@@ -37,3 +38,5 @@ app.UseStaticFiles();
 app.MapHub<VideoChatHub>("/videoChatHub");
 
 app.Run();
+
+public partial class Program { }

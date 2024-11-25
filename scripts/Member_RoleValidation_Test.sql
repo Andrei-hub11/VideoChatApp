@@ -1,0 +1,3 @@
+
+INSERT INTO Member (UserId, RoomId, Role)
+VALUES ('3f8bb3c1-a42e-4ed6-92b3-90c1b216365a', 'BDED66E8-5DF5-48BA-879A-0332F71FD623', 'member');

@@ -2,6 +2,7 @@
 using VideoChatApp.Application.Common.Result;
 using VideoChatApp.Application.Contracts.Data;
 using VideoChatApp.Application.Contracts.Email;
+using VideoChatApp.Application.Contracts.Logging;
 using VideoChatApp.Application.Contracts.Repositories;
 using VideoChatApp.Application.Contracts.Services;
 using VideoChatApp.Application.Contracts.TokenJWT;
@@ -10,6 +11,7 @@ using VideoChatApp.Application.DTOMappers;
 using VideoChatApp.Common.Helpers;
 using VideoChatApp.Common.Utils.Errors;
 using VideoChatApp.Common.Utils.ResultError;
+using VideoChatApp.Common.Utils.Validation;
 using VideoChatApp.Contracts.DapperModels;
 using VideoChatApp.Contracts.Models;
 using VideoChatApp.Contracts.Request;
@@ -28,6 +30,7 @@ public class AccountService : IAccountService
     private readonly IEmailSender _emailSender;
     private readonly IConfiguration _configuration;
     private readonly IAccountServiceErrorHandler _accountServiceErrorHandler;
+    private readonly ILoggerHelper<AccountService> _logger;
 
     public AccountService(
         IUnitOfWork unitOfWork,
@@ -36,7 +39,8 @@ public class AccountService : IAccountService
         IImagesService imagesService,
         IEmailSender emailSender,
         IConfiguration configuration,
-        IAccountServiceErrorHandler accountServiceErrorHandler
+        IAccountServiceErrorHandler accountServiceErrorHandler,
+        ILoggerHelper<AccountService> logger
     )
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -47,6 +51,7 @@ public class AccountService : IAccountService
         _emailSender = emailSender;
         _configuration = configuration;
         _accountServiceErrorHandler = accountServiceErrorHandler;
+        _logger = logger;
     }
 
     public async Task<Result<UserResponseDTO>> GetUserAsync(
@@ -94,6 +99,12 @@ public class AccountService : IAccountService
             if (userExisting != null)
             {
                 return Result.Fail(UserErrorFactory.EmailAlreadyExists());
+            }
+
+            var passwordValidation = PasswordValidator.ValidatePassword(request.Password);
+            if (passwordValidation.Any())
+            {
+                return Result.Fail(passwordValidation);
             }
 
             profileImage = await _imagesService.GetProfileImageAsync(request.ProfileImage);
@@ -308,6 +319,15 @@ public class AccountService : IAccountService
 
         try
         {
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                var passwordValidation = PasswordValidator.ValidatePassword(request.NewPassword);
+                if (passwordValidation.Any())
+                {
+                    return Result.Fail(passwordValidation);
+                }
+            }
+
             var userWithEmailExists = await _userRepository.GetUserByEmailAsync(
                 request.NewEmail,
                 cancellationToken
@@ -360,6 +380,12 @@ public class AccountService : IAccountService
 
             await _userRepository.UpdateApplicationUser(user.Value, cancellationToken);
 
+            await _keycloakService.UpdateUserPasswordAsync(
+                user.Value.Id,
+                request.NewPassword,
+                cancellationToken
+            );
+
             _unitOfWork.Commit();
 
             isRollback = false;
@@ -405,6 +431,12 @@ public class AccountService : IAccountService
             if (!isTokenValid)
             {
                 return Result.Fail(UserErrorFactory.InvalidTokenError());
+            }
+
+            var passwordValidation = PasswordValidator.ValidatePassword(request.NewPassword);
+            if (passwordValidation.Any())
+            {
+                return Result.Fail(passwordValidation);
             }
 
             var userExisting = await _userRepository.GetUserByIdAsync(
@@ -454,5 +486,63 @@ public class AccountService : IAccountService
             newProfileImage: newProfileImage.ProfileImageBytes,
             newProfileImagePath: newProfileImage.ProfileImagePath
         );
+    }
+
+    public async Task CleanupTestUsersAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var allKeycloakUsers = await _keycloakService.GetAllUsersAsync();
+            var testKeycloakUsers = allKeycloakUsers.Where(u =>
+                u.Email.EndsWith("@test.com")
+                || u.Email.EndsWith("@example.com")
+                || u.Email.StartsWith("test")
+                || u.Email.StartsWith("login")
+                || u.Email.StartsWith("update")
+                || u.Email.StartsWith("forgot")
+                || u.Email.StartsWith("duplicate")
+            );
+
+            foreach (var user in testKeycloakUsers)
+            {
+                try
+                {
+                    await _keycloakService.DeleteUserByIdAsync(user.Id);
+                    _logger.LogInformation($"Deleted Keycloak user: {user.Email} ({user.Id})");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        $"Failed to delete Keycloak user: {user.Email} ({user.Id})"
+                    );
+                }
+            }
+
+            // Then clean up database users
+            var dbTestUsers = await _userRepository.GetTestUsersAsync(cancellationToken);
+            foreach (var user in dbTestUsers)
+            {
+                try
+                {
+                    await _userRepository.DeleteUserAsync(user.Id, cancellationToken);
+                    _logger.LogInformation($"Deleted database user: {user.Email} ({user.Id})");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        $"Failed to delete database user: {user.Email} ({user.Id})"
+                    );
+                }
+            }
+
+            _unitOfWork.Commit();
+        }
+        catch (Exception)
+        {
+            _unitOfWork.Rollback();
+            throw;
+        }
     }
 }
