@@ -1,6 +1,10 @@
 import { useRef, useState } from "react";
 
-const useCallPopupLogic = () => {
+type CallPopupLogicProps = {
+  handleAction: (value: string) => void;
+};
+
+const useCallPopupLogic = ({ handleAction }: CallPopupLogicProps) => {
   const [error, setError] = useState<string>("");
   const refInput = useRef<HTMLInputElement>(null);
 
@@ -10,7 +14,7 @@ const useCallPopupLogic = () => {
       return;
     }
 
-    console.log("submit");
+    handleAction(refInput.current.value);
   };
 
   const handleChange = () => {

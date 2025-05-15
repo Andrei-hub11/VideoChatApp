@@ -36,6 +36,7 @@ const useJwtStore = create<JwtState>((set) => ({
     });
 
     Cookies.set("accessTokenExpirationDate", expirationDate.toISOString(), {
+      expires: expirationDate,
       path: "/",
       sameSite: "lax",
     });
@@ -44,8 +45,19 @@ const useJwtStore = create<JwtState>((set) => ({
   },
 
   removeToken: () => {
-    Cookies.remove("accessToken", { path: "/", sameSite: "lax", secure: true });
-    set({ token: null, accessTokenExpirationDate: null });
+    set((state) => {
+      if (state.token === null && state.accessTokenExpirationDate === null) {
+        return state;
+      }
+
+      Cookies.remove("accessToken", {
+        path: "/",
+        sameSite: "lax",
+        secure: true,
+      });
+      Cookies.remove("accessTokenExpirationDate", { path: "/" });
+      return { token: null, accessTokenExpirationDate: null };
+    });
   },
 
   saveRefreshToken: (newRefreshToken: string) => {
@@ -60,6 +72,7 @@ const useJwtStore = create<JwtState>((set) => ({
     });
 
     Cookies.set("refreshTokenExpirationDate", expirationDate.toISOString(), {
+      expires: expirationDate,
       path: "/",
       sameSite: "lax",
     });
@@ -71,13 +84,22 @@ const useJwtStore = create<JwtState>((set) => ({
   },
 
   removeRefreshToken: () => {
-    Cookies.remove("refreshToken", {
-      path: "/",
-      sameSite: "lax",
-      secure: true,
+    set((state) => {
+      if (
+        state.refreshToken === null &&
+        state.refreshTokenExpirationDate === null
+      ) {
+        return state;
+      }
+
+      Cookies.remove("refreshToken", {
+        path: "/",
+        sameSite: "lax",
+        secure: true,
+      });
+      Cookies.remove("refreshTokenExpirationDate", { path: "/" });
+      return { refreshToken: null, refreshTokenExpirationDate: null };
     });
-    Cookies.remove("refreshTokenExpirationDate", { path: "/" });
-    set({ refreshToken: null, refreshTokenExpirationDate: null });
   },
 
   getAccessTokenExpirationDate: () => {

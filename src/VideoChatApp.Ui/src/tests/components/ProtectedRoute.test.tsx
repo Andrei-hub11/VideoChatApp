@@ -5,14 +5,20 @@ import { describe, expect, it, Mock, vi } from "vitest";
 
 import useAuth from "../../hooks/useAuth/useAuth";
 import useJwtState from "../../hooks/useToken/useJwtStore";
-import useUserStore from "../../hooks/useUserStore";
+import useUserStore from "../../hooks/useUser/useUserStore";
 
 import ProtectedRoute from "../../components/ProtectedRoute/ProtectedRoute";
 
 // Mocking hooks
 vi.mock("../../hooks/useAuth/useAuth");
-vi.mock("../../hooks/useJwtState");
-vi.mock("../../hooks/useUserStore");
+vi.mock("../../hooks/useToken/useJwtStore", () => ({
+  default: () => ({
+    token: "mock-token",
+    refreshToken: null,
+    accessTokenExpirationDate: null,
+  }),
+}));
+vi.mock("../../hooks/useUser/useUserStore");
 
 const MockedComponent = () => <div>Protected Content</div>;
 
@@ -27,7 +33,6 @@ describe("ProtectedRoute", () => {
       user: null,
       setUser: vi.fn(),
     });
-    (useJwtState as Mock).mockReturnValue({ token: "mock-token" });
 
     render(
       <MemoryRouter>
@@ -47,7 +52,6 @@ describe("ProtectedRoute", () => {
       user: null,
       setUser: vi.fn(),
     });
-    (useJwtState as Mock).mockReturnValue({ token: "mock-token" });
 
     render(
       <MemoryRouter initialEntries={["/protected"]}>
@@ -78,7 +82,6 @@ describe("ProtectedRoute", () => {
       user: mockUser,
       setUser: vi.fn(),
     });
-    (useJwtState as Mock).mockReturnValue({ token: "mock-token" });
 
     render(
       <MemoryRouter>

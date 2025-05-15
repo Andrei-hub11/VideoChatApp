@@ -31,7 +31,7 @@ const useHeaderLogic = () => {
 
   const navigate = useNavigate();
 
-  const { removeToken } = useJwtState();
+  const { removeToken, removeRefreshToken } = useJwtState();
   const { user } = useUserStore();
 
   const [isMenuOpen, setMenuOpen] = useState<boolean>(false);
@@ -45,7 +45,8 @@ const useHeaderLogic = () => {
   const handleLogout = useCallback(() => {
     setRedirectingToAuth(true);
     removeToken();
-  }, [removeToken, setRedirectingToAuth]);
+    removeRefreshToken();
+  }, [removeToken, removeRefreshToken, setRedirectingToAuth]);
 
   const handleMenuClose = useCallback(
     (event: MouseEvent) => {
@@ -82,10 +83,10 @@ const useHeaderLogic = () => {
   return {
     user,
     isMenuOpen,
-    toggleMenu,
-    handleLogout,
     menuRef,
     menuItems,
+    toggleMenu,
+    handleLogout,
     handleRedirect,
   };
 };

@@ -2,6 +2,8 @@ import "./_Header.scss";
 
 import useHeaderLogic from "./useHeaderLogic";
 
+import useRequestsToJoin from "@hooks/useRequestsToJoin/useRequestsToJoin";
+
 import { Image } from "@components/exports";
 
 import CloseIcon from "../../assets/icons/gg_close.svg";
@@ -11,7 +13,7 @@ import randomPic from "../../assets/images/Batmans pic.jpeg";
 import { HeaderProps } from "../../contracts";
 import HeaderMenu from "../HeaderMenu/HeaderMenu";
 
-function Header({ currentPage, requestsToJoin }: HeaderProps) {
+function Header({ currentPage }: HeaderProps) {
   const {
     user,
     toggleMenu,
@@ -22,6 +24,9 @@ function Header({ currentPage, requestsToJoin }: HeaderProps) {
     menuRef,
   } = useHeaderLogic();
 
+  const { requestsToJoin, setIsAcceptingRequest, setIsAnswerToJoin } =
+    useRequestsToJoin();
+
   return (
     <header className="header">
       <nav className="header__nav">
@@ -29,9 +34,15 @@ function Header({ currentPage, requestsToJoin }: HeaderProps) {
         <div className="header__container">
           {requestsToJoin.length > 0 && (
             <div className="header__message">
-              <p>{requestsToJoin[0].message}</p>
+              <p>{requestsToJoin[0].requesterName} want to join to call</p>
               <div className="header__actions">
-                <div className="header__action header__action--reject">
+                <div
+                  className="header__action header__action--reject"
+                  onClick={() => {
+                    setIsAcceptingRequest(false);
+                    setIsAnswerToJoin(true);
+                  }}
+                >
                   <Image
                     {...{
                       props: {
@@ -43,7 +54,13 @@ function Header({ currentPage, requestsToJoin }: HeaderProps) {
                     }}
                   />
                 </div>
-                <div className="header__action header__action--accept">
+                <div
+                  className="header__action header__action--accept"
+                  onClick={() => {
+                    setIsAcceptingRequest(true);
+                    setIsAnswerToJoin(true);
+                  }}
+                >
                   <Image
                     {...{
                       props: {

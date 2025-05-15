@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using Microsoft.Extensions.DependencyInjection;
 using VideoChatApp.Application.Contracts.Data;
 using VideoChatApp.Application.Contracts.Repositories;
@@ -61,6 +60,11 @@ internal sealed class UnitOfWork : IUnitOfWork
         _transaction?.Rollback();
         _transaction?.Dispose();
         _transaction = _connection.BeginTransaction();
+
+        foreach (var repository in _repositories)
+        {
+            repository.Initialize(_connection, _transaction);
+        }
     }
 
     // protected virtual won't be necessary because it's a sealed class

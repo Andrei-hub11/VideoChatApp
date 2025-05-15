@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 
 import { UnknownError } from "../../contracts/http/types";
 
@@ -14,44 +13,44 @@ import {
 } from "@utils/exports";
 
 const useTokenRenewal = () => {
-  const navigate = useNavigate();
   const {
     saveToken,
     removeToken,
+    removeRefreshToken,
     refreshToken,
     getAccessTokenExpirationDate,
     getRefreshTokenExpirationDate,
   } = useJwtState();
   const { renewAccessToken } = useAuth();
+  const isCheckingRef = useRef<boolean>(false);
 
   useEffect(() => {
     const checkTokenExpiration = async () => {
+      if (isCheckingRef.current) {
+        return;
+      }
+
       try {
+        isCheckingRef.current = true;
         const refreshTokenExpiration = getRefreshTokenExpirationDate();
         const accessTokenExpiration = getAccessTokenExpirationDate();
+
+        const now = new Date();
 
         if (
           !refreshTokenExpiration ||
           !refreshToken ||
-          !accessTokenExpiration
+          now > refreshTokenExpiration
         ) {
+          if (refreshToken) {
+            removeToken();
+            removeRefreshToken();
+          }
           return;
         }
 
-        const newAccessTokenExpirationDate = subtractMinutes(
-          accessTokenExpiration,
-          2,
-        );
-
-        if (new Date() > refreshTokenExpiration) {
-          removeToken();
-          showSessionExpiredError();
-          navigate("/login");
-        }
-
-        if (new Date() > newAccessTokenExpirationDate) {
+        if (minutesUntilExpiration(accessTokenExpiration) < 2) {
           const result = await renewAccessToken({ refreshToken });
-
           saveToken(result.accessToken);
         }
       } catch (error) {
@@ -64,25 +63,25 @@ const useTokenRenewal = () => {
           showUnknowError(error);
           return;
         }
+      } finally {
+        isCheckingRef.current = false;
       }
     };
 
-    const intervalId = setInterval(checkTokenExpiration, 60000);
+    checkTokenExpiration();
+
+    const intervalId = setInterval(checkTokenExpiration, 30000);
 
     return () => clearInterval(intervalId);
   }, [
     getAccessTokenExpirationDate,
     getRefreshTokenExpirationDate,
     removeToken,
-    refreshToken,
     renewAccessToken,
     saveToken,
-    navigate,
+    refreshToken,
+    removeRefreshToken,
   ]);
-
-  const subtractMinutes = (date: Date, minutes: number) => {
-    return new Date(date.getTime() - minutes * 60000);
-  };
 
   const showSessionExpiredError = () => {
     const apiError: UnknownError = {
@@ -93,6 +92,18 @@ const useTokenRenewal = () => {
     };
 
     showAuthError(apiError);
+  };
+
+  const minutesUntilExpiration = (expirationDate: Date | null): number => {
+    if (!expirationDate) {
+      return 0;
+    }
+
+    const now = new Date();
+    const minutesUntilExpiration =
+      (expirationDate.getTime() - now.getTime()) / (1000 * 60);
+
+    return minutesUntilExpiration;
   };
 };
 

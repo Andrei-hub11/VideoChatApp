@@ -83,6 +83,21 @@ public class AccountService : IAccountService
         }
     }
 
+    public async Task<Result<UserResponseDTO>> GetUserByIdAsync(
+        string userId,
+        CancellationToken cancellationToken
+    )
+    {
+        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+
+        if (user == null)
+        {
+            return Result.Fail(UserErrorFactory.UserNotFoundById(userId));
+        }
+
+        return user.ToResponseDTO();
+    }
+
     public async Task<Result<AuthResponseDTO>> RegisterUserAsync(
         UserRegisterRequestDTO request,
         CancellationToken cancellationToken
@@ -380,11 +395,14 @@ public class AccountService : IAccountService
 
             await _userRepository.UpdateApplicationUser(user.Value, cancellationToken);
 
-            await _keycloakService.UpdateUserPasswordAsync(
-                user.Value.Id,
-                request.NewPassword,
-                cancellationToken
-            );
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                await _keycloakService.UpdateUserPasswordAsync(
+                    user.Value.Id,
+                    request.NewPassword,
+                    cancellationToken
+                );
+            }
 
             _unitOfWork.Commit();
 

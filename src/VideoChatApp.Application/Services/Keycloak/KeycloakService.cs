@@ -1,22 +1,21 @@
 ﻿using System.Net;
-using System.Text;
 using System.Net.Http.Headers;
-using Newtonsoft.Json;
+using System.Text;
 using Microsoft.Extensions.Configuration;
-
-using VideoChatApp.Domain.Exceptions;
+using Newtonsoft.Json;
+using VideoChatApp.Application.Common.Result;
+using VideoChatApp.Application.Contracts.Logging;
 using VideoChatApp.Application.Contracts.Services;
-using VideoChatApp.Contracts.Request;
-using VideoChatApp.Contracts.Response;
-using VideoChatApp.Contracts.Models;
+using VideoChatApp.Application.Contracts.UtillityFactories;
 using VideoChatApp.Application.DTOMappers;
 using VideoChatApp.Application.Extensions;
-using VideoChatApp.Application.Common.Result;
-using VideoChatApp.Application.Contracts.UtillityFactories;
-using VideoChatApp.Common.Utils.Errors;
-using VideoChatApp.Domain.Entities;
-using VideoChatApp.Application.Contracts.Logging;
 using VideoChatApp.Common.Helpers;
+using VideoChatApp.Common.Utils.Errors;
+using VideoChatApp.Contracts.Models;
+using VideoChatApp.Contracts.Request;
+using VideoChatApp.Contracts.Response;
+using VideoChatApp.Domain.Entities;
+using VideoChatApp.Domain.Exceptions;
 
 namespace VideoChatApp.Application.Services.Keycloak;
 
@@ -30,8 +29,12 @@ public class KeycloakService : IKeycloakService
     private KeycloakToken _cachedToken = default!;
     private DateTimeOffset _tokenExpiration = DateTimeOffset.MinValue;
 
-    public KeycloakService(HttpClient httpClient, IConfiguration configuration, ILoggerHelper<KeycloakService> logger,
-        IKeycloakServiceErrorHandler keycloakServiceErrorHandler)
+    public KeycloakService(
+        HttpClient httpClient,
+        IConfiguration configuration,
+        ILoggerHelper<KeycloakService> logger,
+        IKeycloakServiceErrorHandler keycloakServiceErrorHandler
+    )
     {
         _httpClient = httpClient;
         _configuration = configuration;
@@ -46,7 +49,11 @@ public class KeycloakService : IKeycloakService
         return users.ToReponseDTO();
     }
 
-    public async Task<Result<AuthResponseDTO>> RegisterUserAync(UserRegisterRequestDTO request, string profileImageUrl, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponseDTO>> RegisterUserAync(
+        UserRegisterRequestDTO request,
+        string profileImageUrl,
+        CancellationToken cancellationToken
+    )
     {
         Result<UserMapping> newUser = default!;
         bool isRollback = true;
@@ -55,7 +62,10 @@ public class KeycloakService : IKeycloakService
             cancellationToken.ThrowIfCancellationRequested();
             var tokenResponse = await GetAdminTokenAsync();
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                tokenResponse.AccessToken
+            );
 
             var user = new
             {
@@ -64,28 +74,33 @@ public class KeycloakService : IKeycloakService
                 enabled = true,
                 credentials = new[]
                 {
-                new
-                {
-                    type = "password",
-                    value = request.Password,
-                    temporary = false
-                }
-            },
+                    new
+                    {
+                        type = "password",
+                        value = request.Password,
+                        temporary = false,
+                    },
+                },
                 attributes = new Dictionary<string, string>
                 {
                     ["profileImagePath"] = profileImageUrl,
-                    ["normalizedUserName"] = request.UserName
-                }
+                    ["normalizedUserName"] = request.UserName,
+                },
             };
 
             var json = JsonConvert.SerializeObject(user);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"http://localhost:8080/admin/realms/chat-app/users", content);
+            var response = await _httpClient.PostAsync(
+                $"http://localhost:8080/admin/realms/chat-app/users",
+                content
+            );
 
             if (!response.IsSuccessStatusCode)
             {
-                var resultMap = await _keycloakServiceErrorHandler.ExtractErrorFromResponse(response);
+                var resultMap = await _keycloakServiceErrorHandler.ExtractErrorFromResponse(
+                    response
+                );
                 return Result.Fail(resultMap.Errors);
             }
 
@@ -128,18 +143,26 @@ public class KeycloakService : IKeycloakService
 
             isRollback = false;
 
-            return new AuthResponseDTO(newUser.Value.ToResponseDTO(), userToken.Value.AccessToken, 
-                userToken.Value.RefreshToken, roles.Value.ToResponseDTO());
+            return new AuthResponseDTO(
+                newUser.Value.ToResponseDTO(),
+                userToken.Value.AccessToken,
+                userToken.Value.RefreshToken,
+                roles.Value.ToResponseDTO()
+            );
         }
         catch (Exception)
         {
-
             throw;
         }
         finally
         {
             // If the user was successfully created in Keycloak, try to delete it in case of failure
-            if (isRollback && newUser != null && !newUser.IsFailure && !string.IsNullOrEmpty(newUser.Value.Id))
+            if (
+                isRollback
+                && newUser != null
+                && !newUser.IsFailure
+                && !string.IsNullOrEmpty(newUser.Value.Id)
+            )
             {
                 try
                 {
@@ -147,14 +170,19 @@ public class KeycloakService : IKeycloakService
                 }
                 catch (Exception deleteEx)
                 {
-                    _logger.LogError(deleteEx, $"Failed to delete user with ID: {newUser.Value.Id} after a registration failure.");
+                    _logger.LogError(
+                        deleteEx,
+                        $"Failed to delete user with ID: {newUser.Value.Id} after a registration failure."
+                    );
                 }
             }
         }
     }
 
-
-    public async Task<Result<AuthResponseDTO>> LoginUserAync(UserLoginRequestDTO request, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponseDTO>> LoginUserAync(
+        UserLoginRequestDTO request,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -181,8 +209,12 @@ public class KeycloakService : IKeycloakService
                 return Result.Fail(roles.Errors);
             }
 
-            return new AuthResponseDTO(user.Value.ToResponseDTO(), AccessToken: userToken.Value.AccessToken,
-                RefreshToken: userToken.Value.RefreshToken, Roles: roles.Value.ToResponseDTO());
+            return new AuthResponseDTO(
+                user.Value.ToResponseDTO(),
+                AccessToken: userToken.Value.AccessToken,
+                RefreshToken: userToken.Value.RefreshToken,
+                Roles: roles.Value.ToResponseDTO()
+            );
         }
         catch (Exception)
         {
@@ -190,17 +222,23 @@ public class KeycloakService : IKeycloakService
         }
     }
 
-    public async Task<KeycloakToken> RefreshAccessTokenAsync(string refreshToken, CancellationToken cancellationToken)
+    public async Task<KeycloakToken> RefreshAccessTokenAsync(
+        string refreshToken,
+        CancellationToken cancellationToken
+    )
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var formData = new Dictionary<string, string>
-    {
-        { "client_id", _configuration.GetRequiredValue("UserKeycloakClient:client_id")},
-        { "client_secret", _configuration.GetRequiredValue("UserKeycloakClient:client_secret") },
-        { "grant_type", "refresh_token" },
-        { "refresh_token", refreshToken}
-    };
+        {
+            { "client_id", _configuration.GetRequiredValue("UserKeycloakClient:client_id") },
+            {
+                "client_secret",
+                _configuration.GetRequiredValue("UserKeycloakClient:client_secret")
+            },
+            { "grant_type", "refresh_token" },
+            { "refresh_token", refreshToken },
+        };
 
         var tokenEndpoint = _configuration.GetRequiredValue("UserKeycloakClient:TokenEndpoint");
 
@@ -227,14 +265,19 @@ public class KeycloakService : IKeycloakService
 
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var response = await _httpClient.GetAsync(apiUrl);
 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve user details: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve user details: {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -255,14 +298,19 @@ public class KeycloakService : IKeycloakService
 
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var response = await _httpClient.GetAsync(apiUrl);
 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve user details: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve user details: {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -284,14 +332,19 @@ public class KeycloakService : IKeycloakService
 
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var response = await _httpClient.GetAsync(apiUrl);
 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve user details: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve user details: {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -307,13 +360,19 @@ public class KeycloakService : IKeycloakService
         return users.First();
     }
 
-    public async Task<Result<UserInfoMapping>> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken)
+    public async Task<Result<UserInfoMapping>> GetUserInfoAsync(
+        string accessToken,
+        CancellationToken cancellationToken
+    )
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var apiUrl = "http://localhost:8080/realms/chat-app/protocol/openid-connect/userinfo";
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            accessToken
+        );
 
         var response = await _httpClient.GetAsync(apiUrl);
 
@@ -325,7 +384,9 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve user details: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve user details: {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -346,11 +407,11 @@ public class KeycloakService : IKeycloakService
 
         var formData = new Dictionary<string, string>
         {
-            { "client_id", _configuration.GetRequiredValue("UserKeycloakAdmin:client_id")},
+            { "client_id", _configuration.GetRequiredValue("UserKeycloakAdmin:client_id") },
             { "client_secret", _configuration.GetRequiredValue("UserKeycloakAdmin:client_secret") },
             { "grant_type", "password" },
             { "username", _configuration.GetRequiredValue("UserKeycloakAdmin:username") },
-            { "password", _configuration.GetRequiredValue("UserKeycloakAdmin:password") }
+            { "password", _configuration.GetRequiredValue("UserKeycloakAdmin:password") },
         };
 
         var tokenEndpoint = _configuration.GetRequiredValue("UserKeycloakAdmin:TokenEndpoint");
@@ -379,13 +440,17 @@ public class KeycloakService : IKeycloakService
     private async Task<Result<KeycloakToken>> GetUserTokenAsync(string username, string password)
     {
         var formData = new Dictionary<string, string>
-    {
-        { "client_id", _configuration.GetRequiredValue("UserKeycloakClient:client_id")},
-        { "client_secret", _configuration.GetRequiredValue("UserKeycloakClient:client_secret") },
-        { "grant_type", "password" },
-        { "username", username },
-        { "password", password }
-    };
+        {
+            { "client_id", _configuration.GetRequiredValue("UserKeycloakClient:client_id") },
+            {
+                "client_secret",
+                _configuration.GetRequiredValue("UserKeycloakClient:client_secret")
+            },
+            { "grant_type", "password" },
+            { "username", username },
+            { "password", password },
+            { "scope", "offline_access" },
+        };
 
         var tokenEndpoint = _configuration.GetRequiredValue("UserKeycloakClient:TokenEndpoint");
 
@@ -410,7 +475,10 @@ public class KeycloakService : IKeycloakService
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var groupUrl = $"http://localhost:8080/admin/realms/chat-app/groups?search={groupName}";
 
@@ -419,13 +487,17 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve groups: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve groups: {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
         var groups = JsonConvert.DeserializeObject<List<GroupResponseDTO>>(jsonResponse);
 
-        var group = groups?.FirstOrDefault(g => g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+        var group = groups?.FirstOrDefault(g =>
+            g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase)
+        );
 
         if (group?.Id == null)
         {
@@ -439,7 +511,10 @@ public class KeycloakService : IKeycloakService
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var usersUrl = $"http://localhost:8080/admin/realms/chat-app/groups/{groupId}/members";
 
@@ -448,7 +523,9 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve users in group: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve users in group: {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -464,7 +541,10 @@ public class KeycloakService : IKeycloakService
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var usersUrl = $"http://localhost:8080/admin/realms/chat-app/clients/?clientId={clientId}";
 
@@ -473,7 +553,9 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve client with clientId = '{clientId}': {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve client with clientId = '{clientId}': {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -489,7 +571,10 @@ public class KeycloakService : IKeycloakService
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var roleUrl = $"http://localhost:8080/admin/realms/chat-app/groups/{groupId}/role-mappings";
 
@@ -498,13 +583,23 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to retrieve roles for group {groupId}: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to retrieve roles for group {groupId}: {response.StatusCode}, {error}"
+            );
         }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        var clientMappingsResponse = JsonConvert.DeserializeObject<ResourceMappingsResponseDTO>(jsonResponse);
+        var clientMappingsResponse = JsonConvert.DeserializeObject<ResourceMappingsResponseDTO>(
+            jsonResponse
+        );
 
-        if (clientMappingsResponse?.ClientMappings == null || !clientMappingsResponse.ClientMappings.TryGetValue("chat-app-client", out ResourceMappingDTO? value))
+        if (
+            clientMappingsResponse?.ClientMappings == null
+            || !clientMappingsResponse.ClientMappings.TryGetValue(
+                "chat-app-client",
+                out ResourceMappingDTO? value
+            )
+        )
         {
             throw new BadRequestException($"Client not found or mappings empty.");
         }
@@ -518,13 +613,17 @@ public class KeycloakService : IKeycloakService
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var clientId = _configuration.GetRequiredValue("UserKeycloakAdmin:client_id");
 
         var client = await GetClientByClientIdAsync(clientId);
 
-        var rolesUrl = $"http://localhost:8080/admin/realms/chat-app/users/{userId}/role-mappings/clients/{client.Id}";
+        var rolesUrl =
+            $"http://localhost:8080/admin/realms/chat-app/users/{userId}/role-mappings/clients/{client.Id}";
 
         var response = await _httpClient.GetAsync(rolesUrl);
 
@@ -561,16 +660,22 @@ public class KeycloakService : IKeycloakService
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
-        var addGroupUrl = $"http://localhost:8080/admin/realms/chat-app/users/{userId}/groups/{groupId}";
+        var addGroupUrl =
+            $"http://localhost:8080/admin/realms/chat-app/users/{userId}/groups/{groupId}";
 
         var response = await _httpClient.PutAsync(addGroupUrl, null);
 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to add user to group: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to add user to group: {response.StatusCode}, {error}"
+            );
         }
     }
 
@@ -578,7 +683,9 @@ public class KeycloakService : IKeycloakService
     {
         var roles = await GetRolesByGroupIdAsync(groupId);
 
-        var role = roles.FirstOrDefault(r => r.Name.Equals(roleName, StringComparison.OrdinalIgnoreCase));
+        var role = roles.FirstOrDefault(r =>
+            r.Name.Equals(roleName, StringComparison.OrdinalIgnoreCase)
+        );
 
         if (role == null)
         {
@@ -588,22 +695,31 @@ public class KeycloakService : IKeycloakService
         await AddRoleToUserAsync(userId, role);
     }
 
-
     private async Task AddRoleToUserAsync(string userId, RoleMappingDTO role)
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
-        var addRoleUrl = $"http://localhost:8080/admin/realms/chat-app/users/{userId}/role-mappings/clients/{role.ContainerId}";
-        var content = new StringContent(JsonConvert.SerializeObject(new[] { new { id = role.Id, name = role.Name } }), Encoding.UTF8, "application/json");
+        var addRoleUrl =
+            $"http://localhost:8080/admin/realms/chat-app/users/{userId}/role-mappings/clients/{role.ContainerId}";
+        var content = new StringContent(
+            JsonConvert.SerializeObject(new[] { new { id = role.Id, name = role.Name } }),
+            Encoding.UTF8,
+            "application/json"
+        );
 
         var response = await _httpClient.PostAsync(addRoleUrl, content);
 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to add role to user: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to add role to user: {response.StatusCode}, {error}"
+            );
         }
     }
 
@@ -612,7 +728,10 @@ public class KeycloakService : IKeycloakService
         cancellationToken.ThrowIfCancellationRequested();
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var updateUserUrl = $"http://localhost:8080/admin/realms/chat-app/users/{user.Id}";
 
@@ -625,38 +744,47 @@ public class KeycloakService : IKeycloakService
             attributes = new Dictionary<string, string>
             {
                 ["profileImagePath"] = user.ProfileImagePath,
-                ["normalizedUserName"] = user.UserName
-            }
+                ["normalizedUserName"] = user.UserName,
+            },
         };
 
         var json = JsonConvert.SerializeObject(updatedUser);
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-
         var response = await _httpClient.PutAsync(updateUserUrl, content, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new BadRequestException($"Failed to update user {user.Id}: {response.StatusCode}, {errorContent}");
+            throw new BadRequestException(
+                $"Failed to update user {user.Id}: {response.StatusCode}, {errorContent}"
+            );
         }
     }
 
-    public async Task UpdateUserPasswordAsync(string userId, string newPassword, CancellationToken cancellationToken)
+    public async Task UpdateUserPasswordAsync(
+        string userId,
+        string newPassword,
+        CancellationToken cancellationToken
+    )
     {
         cancellationToken.ThrowIfCancellationRequested();
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
-        var resetPasswordUrl = $"http://localhost:8080/admin/realms/chat-app/users/{userId}/reset-password";
+        var resetPasswordUrl =
+            $"http://localhost:8080/admin/realms/chat-app/users/{userId}/reset-password";
 
         var resetPasswordPayload = new
         {
             type = "password",
             value = newPassword,
-            temporary = false
+            temporary = false,
         };
 
         var json = JsonConvert.SerializeObject(resetPasswordPayload);
@@ -667,16 +795,20 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new BadRequestException($"Failed to reset password for user {userId}: {response.StatusCode}, {errorContent}");
+            throw new BadRequestException(
+                $"Failed to reset password for user {userId}: {response.StatusCode}, {errorContent}"
+            );
         }
     }
-
 
     public async Task<bool> DeleteUserByIdAsync(string userId)
     {
         var tokenResponse = await GetAdminTokenAsync();
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenResponse.AccessToken
+        );
 
         var deleteUserUrl = $"http://localhost:8080/admin/realms/chat-app/users/{userId}";
         var response = await _httpClient.DeleteAsync(deleteUserUrl);
@@ -684,7 +816,9 @@ public class KeycloakService : IKeycloakService
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            throw new BadRequestException($"Failed to add role to user: {response.StatusCode}, {error}");
+            throw new BadRequestException(
+                $"Failed to add role to user: {response.StatusCode}, {error}"
+            );
         }
 
         return true;

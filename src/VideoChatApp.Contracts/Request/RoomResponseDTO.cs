@@ -1,6 +1,9 @@
-﻿namespace VideoChatApp.Contracts.Request;
+﻿using VideoChatApp.Contracts.Response;
+
+namespace VideoChatApp.Contracts.Request;
 
 public sealed record RoomResponseDTO(
-    Guid RoomId, 
-    string RoomName
-    );
+    Guid Id,
+    string RoomName,
+    IReadOnlyList<MemberResponseDTO> Members
+);

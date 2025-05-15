@@ -7,10 +7,13 @@
     <UserSecretsId>6afdc7c6-1840-43f9-9106-0bd5b277cf93</UserSecretsId>
       <PreserveCompilationContext>true</PreserveCompilationContext>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.5" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 

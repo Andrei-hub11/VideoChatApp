@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-
 using VideoChatApp.Common.Utils.Errors;
 using VideoChatApp.Common.Utils.ResultError;
 
@@ -16,14 +15,16 @@ public class Result
 
     public static Result<List<IError>> Fail(string errorMessage)
     {
-        return new Result<List<IError>>(new List<IError>(), true, new List<IError>
-        { ErrorFactory.Failure(errorMessage) });
+        return new Result<List<IError>>(
+            new List<IError>(),
+            true,
+            new List<IError> { ErrorFactory.Failure(errorMessage) }
+        );
     }
 
     public static Result<List<IError>> Fail(IError error)
     {
-        return new Result<List<IError>>(new List<IError>(), true, new List<IError>
-        { error });
+        return new Result<List<IError>>(new List<IError>(), true, new List<IError> { error });
     }
 
     public static Result<List<IError>> Fail(List<IError> errors)
@@ -47,6 +48,7 @@ public class Result
 public partial class Result<T> : Result
 {
     public T? Value { get; }
+
     [MemberNotNullWhen(false, nameof(Value))]
     [MemberNotNullWhen(true, nameof(Error))]
     public bool IsFailure { get; }
@@ -70,11 +72,11 @@ public partial class Result<T> : Result
         IsFailure = isFail;
     }
 
-    public static implicit operator Result<T>(T value) => new Result<T>(value, false, Array.Empty<IError>());
+    public static implicit operator Result<T>(T value) =>
+        new Result<T>(value, false, Array.Empty<IError>());
 
     public static implicit operator Result<T>(Error error) =>
-     new Result<T>(default, true, new List<IError> { error });
-
+        new Result<T>(default, true, new List<IError> { error });
 
     /// <summary>
     /// Converte implicitamente um resultado contendo uma lista de erros em um resultado de um tipo especificado.
@@ -86,5 +88,4 @@ public partial class Result<T> : Result
     {
         return new Result<T>(default, true, errorResult.Errors.ToList());
     }
-
 }

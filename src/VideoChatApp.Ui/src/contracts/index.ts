@@ -68,7 +68,6 @@ export type ImageUploaderProps = {
 
 export type HeaderProps = {
   currentPage: string;
-  requestsToJoin: RequestToJoin[];
 };
 
 export type HeaderMenuRedirect = "/home" | "/profile";
@@ -91,5 +90,44 @@ export type CallPopupProps = {
   isOpen: boolean;
   title: string;
   placeholder: string;
+  handleAction: (value: string) => void;
   handleClose: () => void;
+};
+
+export type GridVideoChatProps = {
+  roomName: string;
+  roomId: string;
+  isNewCall: boolean;
+};
+
+export type Participant = {
+  id: string;
+  peerId: string;
+  roomId: string;
+  stream: MediaStream | null;
+};
+
+export type RoomMember = {
+  memberId: string;
+  roomId: string;
+  userId: string;
+  peerId: string;
+  role: string;
+};
+
+export type JoinRoomRequest = {
+  requesterName: string;
+  requesterId: string;
+};
+
+export type Room = {
+  id: string;
+  roomName: string;
+  members: RoomMember[];
+};
+
+export type NewMessage = {
+  roomId: string;
+  content: string;
+  memberId: string;
 };

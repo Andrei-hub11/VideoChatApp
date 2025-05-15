@@ -1,0 +1,196 @@
+@import "../../utils/variables/variable";
+
+.video-chat {
+  display: grid;
+  grid-template-columns: 776px 246px;
+  grid-template-rows: 1fr;
+  justify-content: end;
+  height: 100%;
+  padding-top: 0.6rem;
+  gap: 14rem;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  &__item-video {
+    margin: 0 auto;
+    width: 59.2rem;
+    height: 33.3rem;
+    & video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__item--videos {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.4rem;
+  }
+
+  &__item-participant {
+    width: 224px;
+    height: 126px;
+    & video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__item:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    background: $primary-dark-color;
+    gap: 0;
+    height: 82vh;
+  }
+
+  &__item--variant {
+    background: unset !important;
+  }
+
+  &__messages {
+    display: none;
+    padding: 0.8rem 0.8rem;
+
+    &-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-align: justify;
+      color: $primary-dark-color;
+    }
+  }
+
+  &__messages--visible {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: calc(100% - 4.2rem);
+    gap: 1rem;
+  }
+
+  &__messages-item {
+    display: flex;
+    gap: 0.4rem;
+    flex-direction: column;
+    width: 20rem;
+    background: $primary-color;
+    padding: 1.4rem 0.9rem 0.9rem 0.8rem;
+    border-radius: 2rem 0.5rem 2rem 0;
+  }
+
+  &__messages-item--variant {
+    background: $primary-light-color;
+    padding: 1.4rem 3.7rem 0.9rem 0.8rem;
+    border-radius: 2rem 0.5rem 2rem 0;
+  }
+
+  &__item-input {
+    display: none;
+  }
+
+  &__item-input--visible {
+    display: flex;
+    margin-top: auto;
+    justify-content: space-between;
+    width: 100%;
+    height: 4.2rem;
+
+    & input {
+      width: 100%;
+      border: none;
+      outline: none;
+      padding: 0.8rem 1rem;
+      border-radius: 1rem;
+      background: $primary-dark-color;
+      border: 0.1rem solid $white-color;
+      color: $white-color;
+      caret-color: $white-color;
+    }
+
+    & input::placeholder {
+      color: $white-color;
+    }
+
+    & .btn-send {
+      cursor: pointer;
+      padding: 0.8rem 1rem;
+      border-radius: 1rem;
+      background: $primary-dark-color;
+      border: 0.1rem solid $white-color;
+    }
+  }
+
+  &__messages-info {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__messages-time {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: $primary-dark-color;
+  }
+
+  &__messages-image {
+    cursor: pointer;
+  }
+
+  &__item-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 4.2rem;
+    background: $primary-light-color;
+  }
+
+  &__item-info--variant {
+    margin-top: auto;
+  }
+
+  &__item-info-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: $white-color;
+  }
+
+  &__item-actions {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__item-actions--mute {
+    padding: 0.6rem 2rem;
+    cursor: pointer;
+    background: $primary-dark-color;
+    border-radius: 1rem;
+  }
+
+  &__item-actions--leave {
+    padding: 1rem 3.2rem;
+    cursor: pointer;
+    background: #cc0000;
+    border-radius: 1rem;
+
+    & p {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: $white-color;
+    }
+  }
+
+  &__item-actions--chat {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    background: $primary-dark-color;
+    border-radius: 1rem;
+    cursor: pointer;
+  }
+}

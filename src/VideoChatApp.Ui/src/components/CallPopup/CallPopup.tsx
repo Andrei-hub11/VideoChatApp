@@ -10,11 +10,14 @@ import CloseIcon from "../../assets/icons/ic_round-close.svg";
 
 function CallPopup({
   handleClose,
+  handleAction,
   isOpen,
   title,
   placeholder,
 }: CallPopupProps) {
-  const { handleSubmit, handleChange, error, refInput } = useCallPopupLogic();
+  const { handleSubmit, handleChange, error, refInput } = useCallPopupLogic({
+    handleAction,
+  });
 
   return (
     <div className={`call-popup ${isOpen ? "call-popup--active" : ""}`}>

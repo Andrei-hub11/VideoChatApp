@@ -35,3 +35,21 @@ export const showPasswordUpdateSuccessAlert = () => {
     },
   });
 };
+
+export const showJoinDeniedAlert = () => {
+  Swal.fire({
+    title: "Join Denied",
+    html: `
+        <div class="custom-div">
+          <p>Your request to join the room has been denied.</p>
+        </div>
+      `,
+    icon: "warning",
+    confirmButtonText: "OK",
+    customClass: {
+      popup: "custom-swal-popup",
+      title: "custom-swal-title",
+      confirmButton: "custom-swal-confirm",
+    },
+  });
+};

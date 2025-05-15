@@ -1,5 +1,5 @@
 import { FormikHelpers, FormikValues, useFormik } from "formik";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 
 import { UserResponse } from "@contracts/httpResponse/types";
@@ -41,7 +41,6 @@ const useFormProfileLogic = (form: UpdateProfileFormProps) => {
     fields.map((field) => [
       field.name,
       user ? getUserFieldValue(user, field.name) : field.name,
-      "",
     ]),
   );
 
@@ -75,7 +74,6 @@ const useFormProfileLogic = (form: UpdateProfileFormProps) => {
             fields.map((field) => [
               field.name,
               getUserFieldValue(updatedUser, field.name),
-              "",
             ]),
           );
 
@@ -98,15 +96,20 @@ const useFormProfileLogic = (form: UpdateProfileFormProps) => {
     values,
     errors,
     touched,
+    isSubmitting,
     handleBlur,
     handleChange,
     handleSubmit,
-    isSubmitting,
+    resetForm,
   } = useFormik<FormikValues>({
     initialValues,
     validationSchema: validations,
     onSubmit,
   });
+
+  useEffect(() => {
+    resetForm({ values: initialValues });
+  }, [initialValues, resetForm]);
 
   const handleSubmitClick = useCallback(
     async (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {

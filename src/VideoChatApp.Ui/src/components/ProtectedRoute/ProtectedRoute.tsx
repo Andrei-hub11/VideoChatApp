@@ -19,34 +19,25 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
-
   const location = useLocation();
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [_, setIsExiting] = useState<boolean>(false);
 
   const { fetchUserProfile } = useAuth();
   const { setUser, user } = useUserStore();
   const { setRedirectingToAuth } = useAuthTransitionStore();
 
-  const { token } = useJwtState();
-
-  const [profileFetched, setProfileFetched] = useState(false);
+  const { token, refreshToken } = useJwtState();
 
   useTokenRenewal();
 
   useEffect(() => {
-    if (!token || user !== null || profileFetched) {
-      setIsLoading(false);
-      return;
-    }
-
     const fetchProfile = async () => {
       try {
-        const result = await fetchUserProfile();
-
-        setUser(result);
-        setIsLoading(false);
+        if (token && !user) {
+          const result = await fetchUserProfile();
+          setUser(result);
+        }
       } catch (error) {
         if (isUnknownError(error) && error.status === 401) {
           showAuthError(error);
@@ -59,30 +50,30 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           setIsLoading(false);
           return;
         }
-
-        setIsLoading(false);
-      } finally {
-        setProfileFetched((prev) => !prev);
       }
+      setIsLoading(false);
     };
 
     fetchProfile();
-  }, [fetchUserProfile, setUser, token, user, profileFetched]);
+  }, [token, user, fetchUserProfile, setUser]);
 
   useEffect(() => {
-    if (!isLoading && !token) {
-      setIsExiting(true);
-
+    if (!isLoading && !token && !refreshToken) {
       const timeout = setTimeout(() => {
-        //enable the page exit animation
         setRedirectingToAuth(true);
-
         navigate("/login", { state: { from: location } });
-      }, 500); // Delay navigation to match animation duration
+      }, 500);
 
       return () => clearTimeout(timeout);
     }
-  }, [isLoading, token, navigate, location, setRedirectingToAuth]);
+  }, [
+    isLoading,
+    token,
+    refreshToken,
+    setRedirectingToAuth,
+    navigate,
+    location,
+  ]);
 
   if (isLoading) {
     return <PageLoader />;

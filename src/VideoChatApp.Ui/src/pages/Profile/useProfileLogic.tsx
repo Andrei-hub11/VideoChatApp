@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "react-query";
+import Swal from "sweetalert2";
 
 import { UserResponse } from "@contracts/account/types";
 import { UpdateProfileRequest } from "@contracts/account/types";
-import { ErrorTypes } from "@contracts/http/types";
+import { ErrorTypes, UnknownError } from "@contracts/http/types";
 
 import { useUserStore } from "@hooks/exports";
 
 import { updateProfile } from "@services/account/account";
 
-import { handleException } from "@utils/exports";
+import { handleException, showUnknowError } from "@utils/exports";
 import { isUpdateProfileForm } from "@utils/helpers/guards";
 
 const useProfileLogic = () => {
@@ -48,9 +49,8 @@ const useProfileLogic = () => {
           },
         });
 
-        console.log(updatedUser);
-
         setUser(updatedUser);
+        showUpdatedProfileSuccess();
         return updatedUser;
       }
     } catch (error: unknown) {
@@ -101,6 +101,36 @@ const useProfileLogic = () => {
     setBase64Image("");
   };
 
+  const showUpdatedProfileSuccess = () => {
+    Swal.fire({
+      title: "Profile Updated",
+      html: `
+          <div class="custom-div">
+            <p>Your profile has been updated successfully.</p>
+          </div>
+        `,
+      icon: "success",
+      confirmButtonText: "OK",
+      customClass: {
+        popup: "custom-swal-popup",
+        title: "custom-swal-title",
+        confirmButton: "custom-swal-confirm",
+      },
+    });
+  };
+
+  const showImageInputError = () => {
+    const imageError: UnknownError = {
+      status: 400,
+      type: "invalid_image",
+      title: "Invalid Image",
+      detail:
+        "The image must be square to fit properly. Please upload a square image.",
+    };
+
+    showUnknowError(imageError);
+  };
+
   return {
     handleUpdateProfile,
     handleImageInputClick,
@@ -112,6 +142,3 @@ const useProfileLogic = () => {
 };
 
 export default useProfileLogic;
-function showImageInputError() {
-  throw new Error("Function not implemented.");
-}
